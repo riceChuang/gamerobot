@@ -1,0 +1,17 @@
+bindport: ":12345"
+loglevel: "debug"
+account: jason1111
+password: jason1111
+environment:
+  - env: "DEV"
+    serverUrl: "ws://103.103.81.3"
+    loginDomain: "103.103.81.3"
+    agentID: 2
+  - env: "RTP"
+    serverUrl: "ws://10.1.7.36"
+    loginDomain: "10.1.7.36"
+    agentID: 1
+  - env: "FEATURE"
+    serverUrl: "ws://10.1.7.21"
+    loginDomain: "10.1.7.21"
+    agentID: 3

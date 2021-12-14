@@ -1,0 +1,33 @@
+{{ define "homepage/leftside_game.html"}}
+<script>
+    var gameList = {{ .resp.GameList }}
+    console.log(gameList)
+</script>
+<div class="col-12 col-md-2">
+    <form>
+        <fieldset>
+            <div class="mb-2">
+                <label for="envSelect" class="form-label">選擇環境</label>
+                <select id="envSelect" class="form-select">
+                    <option selected>Please Select</option>
+                    {{ range .resp.Envs }}
+                    <option>{{ . }}</option>
+                    {{ end }}
+                </select>
+            </div>
+            <div class="mb-2">
+                <label for="gameSelect" class="form-label">遊戲選擇</label>
+                <select id="gameSelect" class="form-select" onchange="clickGame(this)">
+                    <option selected>Please Select</option>
+                    {{ range $key, $value := .resp.GameList }}
+                    <option value={{ $value.GameID }} id={{ $value.GameID }}>{{ $value.Name }}</option>
+                    {{ end }}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">登入</button>
+        </fieldset>
+    </form>
+
+</div>
+
+{{ end }}

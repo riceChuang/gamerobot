@@ -1,0 +1,22 @@
+{{ define "views/index.html"}}
+<!--Embed the header.html template at this location-->
+{{ template "layouts/header.html" .}}
+<script src="js/window.js"></script>
+<div class="container">
+    <div class="row">
+        <!--Embed the leftside_game.html template at this location-->
+        {{ template "homepage/leftside_game.html" .}}
+
+        <div id="list" class="anyClass col-12 col-md-8">
+        </div>
+
+        <!--Embed the rightside_game.html template at this location-->
+        {{ template "homepage/rightside_game.html" .}}
+
+    </div>
+</div>
+<!--Embed the param.html template at this location-->
+{{ template "layouts/param.html" .}}
+<!--Embed the footer.html template at this location-->
+{{ template "layouts/footer.html" .}}
+{{ end }}

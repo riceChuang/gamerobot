@@ -1,0 +1,5 @@
+games:
+  - name: "BYDH"
+    gameid: 38
+    hallport: 5012
+    roomtype: ['string1', 'string2', 'string3', 'string4', 'string5', 'string6']
