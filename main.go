@@ -4,10 +4,12 @@ import (
 	"context"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/riceChuang/gamerobot/game"
-	"github.com/riceChuang/gamerobot/handler"
-	"github.com/riceChuang/gamerobot/util/config"
 	log "github.com/sirupsen/logrus"
+	"gitlab.baifu-tech.net/dsg-game/game-robot/framework"
+	"gitlab.baifu-tech.net/dsg-game/game-robot/handler"
+	"gitlab.baifu-tech.net/dsg-game/game-robot/service/connect"
+	"gitlab.baifu-tech.net/dsg-game/game-robot/service/game"
+	"gitlab.baifu-tech.net/dsg-game/game-robot/util/config"
 	"net/http"
 	"os"
 	"os/signal"
@@ -42,11 +44,16 @@ func main() {
 
 	//初始化遊戲邏輯
 	game.InitGameInstance()
+	//初始化內部服務通道
+	framework.InitDispatcher()
 
 	srv := &http.Server{
 		Addr:    ":8080",
 		Handler: r,
 	}
+
+	//初始化connManager
+	connect.NewClientWsToGameServer(":8080")
 
 	go func() {
 		// service connections

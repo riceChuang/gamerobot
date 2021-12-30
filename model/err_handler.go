@@ -17,7 +17,7 @@ func (e APIException) Error() string {
 }
 
 var (
-	//error for internal Error
+	//error for js Error
 	ErrInternalServerError = APIException{Code: http.StatusInternalServerError}
 	//error not found
 	ErrNotFound = APIException{Code: http.StatusNotFound}

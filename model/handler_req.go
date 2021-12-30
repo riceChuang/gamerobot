@@ -6,12 +6,11 @@ import (
 )
 
 type UserLogin struct {
-	Name     string `json:"name"`
+	UserName string `json:"username"`
 	Password string `json:"password"`
 	GameID   int32  `json:"gameid"`
-	Env      int32  `json:"env"`
+	Env      string `json:"env"`
 }
-
 
 // Handler handle message
 type Handler struct {

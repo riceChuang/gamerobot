@@ -1,7 +1,6 @@
 {{ define "homepage/leftside_game.html"}}
 <script>
     var gameList = {{ .resp.GameList }}
-    console.log(gameList)
 </script>
 <div class="col-12 col-md-2">
     <form>
@@ -17,14 +16,14 @@
             </div>
             <div class="mb-2">
                 <label for="gameSelect" class="form-label">遊戲選擇</label>
-                <select id="gameSelect" class="form-select" onchange="clickGame(this)">
+                <select id="gameSelect" class="form-select" onchange="window.index.clickGame(this)">
                     <option selected>Please Select</option>
                     {{ range $key, $value := .resp.GameList }}
                     <option value={{ $value.GameID }} id={{ $value.GameID }}>{{ $value.Name }}</option>
                     {{ end }}
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary">登入</button>
+            <input type="button" class="btn btn-primary" onclick="window.index.loginRequest()" value="登入"/>
         </fieldset>
     </form>
 

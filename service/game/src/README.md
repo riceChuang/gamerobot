@@ -1,0 +1,1 @@
+mockgen -source=game.go -destination=mock_game.go -package=src

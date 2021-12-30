@@ -2,7 +2,7 @@ package model
 
 import (
 	"fmt"
-	"github.com/riceChuang/gamerobot/using/netproto"
+	"gitlab.baifu-tech.net/dsg-game/game-robot/using/netproto"
 	"google.golang.org/protobuf/proto"
 )
 

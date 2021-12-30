@@ -1,14 +1,18 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/riceChuang/gamerobot/game"
-	"github.com/riceChuang/gamerobot/model"
-	"github.com/riceChuang/gamerobot/service/usecase"
-	"github.com/riceChuang/gamerobot/util/config"
-	"github.com/riceChuang/gamerobot/util/logs"
 	log "github.com/sirupsen/logrus"
+	"gitlab.baifu-tech.net/dsg-game/game-robot/common"
+	"gitlab.baifu-tech.net/dsg-game/game-robot/framework"
+	"gitlab.baifu-tech.net/dsg-game/game-robot/model"
+	"gitlab.baifu-tech.net/dsg-game/game-robot/service/connect"
+	"gitlab.baifu-tech.net/dsg-game/game-robot/service/game"
+	"gitlab.baifu-tech.net/dsg-game/game-robot/usecase"
+	"gitlab.baifu-tech.net/dsg-game/game-robot/util/config"
+	"gitlab.baifu-tech.net/dsg-game/game-robot/util/logs"
 
 	"net/http"
 )
@@ -51,44 +55,83 @@ func (h *UserController) GetIndex(ctx *gin.Context) {
 		resp.Envs = append(resp.Envs, value.ENV)
 	}
 
-	ctx.HTML(http.StatusOK, "views/index.html", gin.H{
+	ctx.HTML(http.StatusOK, "views/game_cascade.html", gin.H{
 		"resp": resp,
 	})
 }
 
 //用戶登入
 func (h *UserController) UserLogin(ctx *gin.Context) {
-	userLoginJson := &model.UserLogin{}
+	request := &model.UserLogin{}
 
-	ctx.BindJSON(userLoginJson)
-	if userLoginJson.Name == "" {
-		logs.GetLogger().Debug("沒設定name 使用default")
-		userLoginJson.Name = h.Config.TestUserAccount
+	err := ctx.BindJSON(request)
+	if err != nil {
+		h.logger.Error(err)
+		return
+	}
+	if request.UserName == "" {
+		h.logger.Debug("沒設定name 使用default")
+		request.UserName = h.Config.TestUserAccount
 	}
 
-	if userLoginJson.Password == "" {
-		logs.GetLogger().Debug("沒設定password 使用default")
-		userLoginJson.Password = h.Config.TestUserPwd
+	if request.Password == "" {
+		h.logger.Debug("沒設定password 使用default")
+		request.Password = h.Config.TestUserPwd
 	}
 
-	if userLoginJson.GameID == 0 {
-		logs.GetLogger().Info("沒有設定遊戲Id")
+	if request.GameID == 0 {
+		h.logger.Info("沒有設定遊戲Id")
 		ctx.Error(model.ErrInvalidRequest)
 		return
 	}
 
-	if userLoginJson.Env == 0 {
-		logs.GetLogger().Info("沒有設定環境Id")
+	if request.Env == "" {
+		h.logger.Info("沒有設定環境Id")
 		ctx.Error(model.ErrInvalidRequest)
 		return
 	}
 
+	var envInfo *model.EnvCfg
+	for _, env := range h.Config.Environment {
+		if env.ENV == request.Env {
+			envInfo = &env
+			break
+		}
+	}
+	if envInfo == nil {
+		h.logger.Error("找不到環境")
+		ctx.Error(model.ErrInternalServerError)
+		return
+	}
+	var token string
+	token, err = h.useCase.DsgAPIBase.Login(envInfo.LoginDomain, envInfo.AgentID, request.UserName, request.Password, request.GameID)
+	if err != nil {
+		h.logger.Error(err)
+		ctx.Error(model.ErrInternalServerError)
+		return
+	}
+	h.logger.Info(token)
 
+	connManager := connect.GetClientGameCommunicateManager()
+	conn, err := connect.NewClientWsGameConn(ctx)
+	if err != nil {
+		h.logger.Error("conn error: %v", err)
+		return
+	}
+	connManager.AddClient(conn)
+	conn.SetGameConn(connect.NewProtoConnect(framework.NewConn(token, nil)))
+	conn.SetGameID(common.GameServerID(request.GameID))
+
+	ctx.JSON(http.StatusOK, model.Resp{
+		Code:    http.StatusOK,
+		Message: "success",
+		Data:    conn.ID,
+	})
+	return
 }
 
 //用戶發送訊息
 func (h *UserController) SendMessage(ctx *gin.Context) {
-
 }
 
 var upGrader = websocket.Upgrader{
@@ -98,34 +141,32 @@ var upGrader = websocket.Upgrader{
 }
 
 func (h *UserController) WebSocketConn(ctx *gin.Context) {
+	connID := ctx.Query("connID")
+	fmt.Println(connID)
+
+	connManager := connect.GetClientGameCommunicateManager()
+	conn := connManager.GetClient(connID)
+	if conn == nil {
+		h.logger.Errorf("找不到connID:%v", connID)
+		ctx.Error(model.ErrNotFound)
+		return
+	}
+
 	//升级get请求为webSocket协议
 	ws, err := upGrader.Upgrade(ctx.Writer, ctx.Request, nil)
 	if err != nil {
 		return
 	}
-	go func() {
-		defer ws.Close()
-		for {
-			//读取ws中的数据
-			mt, message, err := ws.ReadMessage()
-			if err != nil {
-				break
-			}
-			if string(message) == "ping" {
-				message = []byte("pong")
-			}
-			//写入ws数据
-			err = ws.WriteMessage(mt, message)
-			if err != nil {
-				break
-			}
-		}
-	}()
-}
+	connection := framework.NewConn("", ws)
+	wsConnection := connect.NewHttpConnect(connection)
+	conn.SetWsConn(wsConnection)
+
+	err = wsConnection.Connect()
+	if err != nil {
+		h.logger.Error(err)
+		return
+	}
 
 
-func (h *UserController) ChatIndex(ctx *gin.Context) {
-
-	ctx.HTML(http.StatusOK, "chat_index.html", gin.H{})
-
+	return
 }
