@@ -1,4 +1,4 @@
-module gitlab.baifu-tech.net/dsg-game/game-robot
+module github.com/riceChuang/gamerobot
 
 go 1.13
 

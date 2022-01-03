@@ -1,6 +1,6 @@
 package model
 
-import "gitlab.baifu-tech.net/dsg-game/game-robot/common"
+import "github.com/riceChuang/gamerobot/common"
 
 type WSMessage struct {
 	From     common.PasserType

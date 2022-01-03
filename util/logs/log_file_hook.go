@@ -2,7 +2,7 @@ package logs
 
 import (
 	"fmt"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/util/io"
+	"github.com/riceChuang/gamerobot/util/io"
 	"os"
 	"path/filepath"
 	"time"

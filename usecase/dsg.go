@@ -4,7 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/util/crypt"
+	"github.com/riceChuang/gamerobot/util/crypt"
 	"io"
 	"io/ioutil"
 	"net/http"

@@ -1,8 +1,8 @@
 package src
 
 import (
-	"gitlab.baifu-tech.net/dsg-game/game-robot/common"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/model"
+	"github.com/riceChuang/gamerobot/common"
+	"github.com/riceChuang/gamerobot/model"
 )
 
 type GameLogicBase interface {

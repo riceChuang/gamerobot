@@ -2,7 +2,7 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/handler/controller"
+	"github.com/riceChuang/gamerobot/handler/controller"
 )
 
 func Router(router *gin.Engine) {

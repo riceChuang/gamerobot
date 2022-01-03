@@ -1,9 +1,9 @@
 package framework
 
 import (
-	"gitlab.baifu-tech.net/dsg-game/game-robot/common"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/model"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/util/logs"
+	"github.com/riceChuang/gamerobot/common"
+	"github.com/riceChuang/gamerobot/model"
+	"github.com/riceChuang/gamerobot/util/logs"
 	"sync"
 )
 

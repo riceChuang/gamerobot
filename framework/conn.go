@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/util"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/util/logs"
+	"github.com/riceChuang/gamerobot/util"
+	"github.com/riceChuang/gamerobot/util/logs"
 	"io"
 	"sync"
 )

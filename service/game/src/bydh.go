@@ -1,9 +1,9 @@
 package src
 
 import (
-	"gitlab.baifu-tech.net/dsg-game/game-robot/common"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/model"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/using/netproto"
+	"github.com/riceChuang/gamerobot/common"
+	"github.com/riceChuang/gamerobot/model"
+	"github.com/riceChuang/gamerobot/using/netproto"
 )
 
 type BYDHLogic struct {

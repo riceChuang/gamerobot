@@ -1,8 +1,8 @@
 package game
 
 import (
-	"gitlab.baifu-tech.net/dsg-game/game-robot/common"
-	src2 "gitlab.baifu-tech.net/dsg-game/game-robot/service/game/src"
+	"github.com/riceChuang/gamerobot/common"
+	src2 "github.com/riceChuang/gamerobot/service/game/src"
 	"sync"
 )
 

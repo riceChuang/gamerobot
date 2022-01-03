@@ -4,11 +4,11 @@ import (
 	"context"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/common"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/framework"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/model"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/service/game"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/util/logs"
+	"github.com/riceChuang/gamerobot/common"
+	"github.com/riceChuang/gamerobot/framework"
+	"github.com/riceChuang/gamerobot/model"
+	"github.com/riceChuang/gamerobot/service/game"
+	"github.com/riceChuang/gamerobot/util/logs"
 	"net/http"
 	"sync"
 )
@@ -33,6 +33,7 @@ type ClientGameCommunicateManager struct {
 	client           map[string]*ClientConn
 	logger           *log.Entry
 	parser           framework.Parser
+	gameWSUrlMap	map[string]string
 }
 
 func NewClientWsToGameServer(wsAddr string) *ClientGameCommunicateManager {

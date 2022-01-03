@@ -2,8 +2,8 @@ package framework
 
 import (
 	"errors"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/model"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/util"
+	"github.com/riceChuang/gamerobot/model"
+	"github.com/riceChuang/gamerobot/util"
 )
 
 // Parser ...

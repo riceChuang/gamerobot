@@ -2,7 +2,7 @@ package logs
 
 import (
 	"context"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/util/io"
+	"github.com/riceChuang/gamerobot/util/io"
 	"io/ioutil"
 	"os"
 	"path/filepath"

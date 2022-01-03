@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/common"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/framework"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/model"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/util/logs"
+	"github.com/riceChuang/gamerobot/common"
+	"github.com/riceChuang/gamerobot/framework"
+	"github.com/riceChuang/gamerobot/model"
+	"github.com/riceChuang/gamerobot/util/logs"
 	"sync"
 )
 

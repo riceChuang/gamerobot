@@ -3,10 +3,10 @@ package connect
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/framework"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/model"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/util"
-	"gitlab.baifu-tech.net/dsg-game/game-robot/util/logs"
+	"github.com/riceChuang/gamerobot/framework"
+	"github.com/riceChuang/gamerobot/model"
+	"github.com/riceChuang/gamerobot/util"
+	"github.com/riceChuang/gamerobot/util/logs"
 	"sync"
 
 	"github.com/golang/protobuf/proto"

@@ -1,7 +1,7 @@
 package config
 
 import (
-	"gitlab.baifu-tech.net/dsg-game/game-robot/model"
+	"github.com/riceChuang/gamerobot/model"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
