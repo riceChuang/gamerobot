@@ -3,12 +3,12 @@ package connect
 import (
 	"context"
 	"github.com/gorilla/websocket"
-	log "github.com/sirupsen/logrus"
 	"github.com/riceChuang/gamerobot/common"
 	"github.com/riceChuang/gamerobot/framework"
 	"github.com/riceChuang/gamerobot/model"
 	"github.com/riceChuang/gamerobot/service/game"
 	"github.com/riceChuang/gamerobot/util/logs"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"sync"
 )
@@ -26,14 +26,15 @@ var upgrader = websocket.Upgrader{
 }
 
 type ClientGameCommunicateManager struct {
-	mu               *sync.Mutex
-	ctx              context.Context
-	cancel           context.CancelFunc
-	wsSeverAddr      string
-	client           map[string]*ClientConn
-	logger           *log.Entry
-	parser           framework.Parser
-	gameWSUrlMap	map[string]string
+	mu           *sync.Mutex
+	ctx          context.Context
+	cancel       context.CancelFunc
+	wsSeverAddr  string
+	client       map[string]*ClientConn
+	logger       *log.Entry
+	parser       framework.Parser
+	gameWSUrlMap map[string]string
+	hallWS       *ProtoConnect
 }
 
 func NewClientWsToGameServer(wsAddr string) *ClientGameCommunicateManager {
@@ -45,7 +46,7 @@ func NewClientWsToGameServer(wsAddr string) *ClientGameCommunicateManager {
 			logger: logs.GetLogger().WithFields(log.Fields{
 				"server": "websocket",
 			}),
-			parser:           &framework.ByteParser{},
+			parser: &framework.ByteParser{},
 		}
 
 		framework.GetClientDispatcher().AddMsgPasser(string(common.ServerToTransfer), clientGameCommunicateManager.TransferClientMessage)
@@ -146,3 +147,4 @@ func (c2gm *ClientGameCommunicateManager) CheckTcpAlive() bool {
 	//conn.Close()
 	return true
 }
+

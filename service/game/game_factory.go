@@ -2,14 +2,14 @@ package game
 
 import (
 	"github.com/riceChuang/gamerobot/common"
-	src2 "github.com/riceChuang/gamerobot/service/game/src"
+	"github.com/riceChuang/gamerobot/service/game/src"
 	"sync"
 )
 
-type createGameLogicFunc func(gType common.GameServerID) (instance src2.GameLogicBase)
+type createGameLogicFunc func(gType common.GameServerID) (instance src.GameLogicBase)
 
 var (
-	gameLogicInstanceMap = map[common.GameServerID]src2.GameLogicBase{}
+	gameLogicInstanceMap = map[common.GameServerID]src.GameLogicBase{}
 	mu                   = sync.Mutex{}
 )
 
@@ -20,7 +20,7 @@ func InitGameInstance() {
 	return
 }
 
-func GetInstanceByContentType(gameID common.GameServerID) (instance src2.GameLogicBase) {
+func GetInstanceByContentType(gameID common.GameServerID) (instance src.GameLogicBase) {
 	mu.Lock()
 	defer mu.Unlock()
 	var (
@@ -35,12 +35,12 @@ func GetInstanceByContentType(gameID common.GameServerID) (instance src2.GameLog
 	return
 }
 
-func GetAllGameInstance() map[common.GameServerID]src2.GameLogicBase {
+func GetAllGameInstance() map[common.GameServerID]src.GameLogicBase {
 	return gameLogicInstanceMap
 }
 
-func createGameRewardInstance(gType common.GameServerID) (instance src2.GameLogicBase) {
+func createGameRewardInstance(gType common.GameServerID) (instance src.GameLogicBase) {
 	var f createGameLogicFunc
-	f = src2.CreateInstanceByContentType
+	f = src.CreateInstanceByContentType
 	return f(gType)
 }

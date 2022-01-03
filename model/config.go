@@ -22,8 +22,8 @@ type CommonCfg struct {
 	RoomType []string `mapstructure:"roomtype"`
 	GameID   int32    `mapstructure:"gameid"`
 	HallPort int32    `mapstructure:"hallport"`
+	GameName string
 }
-
 
 // RoomCfgBase ...
 type RoomCfgBase struct {

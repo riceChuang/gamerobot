@@ -10,9 +10,12 @@ var sock= null;
 function clickGame(select) {
     var game = gameList[select.value];
     var container = document.getElementById("param")
-
+    var roomContainer = document.getElementById("roomSelect")
     while (container.lastElementChild) {
         container.removeChild(container.lastElementChild)
+    }
+    while (roomContainer.lastElementChild){
+        roomContainer.removeChild(roomContainer.lastElementChild)
     }
     new Map(Object.entries(game["Buttons"])).forEach((value, key) => {
         var button = document.createElement("button");
@@ -23,6 +26,12 @@ function clickGame(select) {
         container.appendChild(button);
     })
 
+    Object.values(game["RoomType"]).forEach(value => {
+        var room = document.createElement("option");
+        room.innerText = value
+        room.value = value
+        roomContainer.appendChild(room);
+    })
 }
 
 function send() {
@@ -83,10 +92,12 @@ function loginRequest() {
 
     var envReq = document.getElementById(`envSelect`).value;
     var gameID = Number(document.getElementById(`gameSelect`).value);
+    var roomType = document.getElementById(`roomSelect`).value;
 
     post(common.router.loginUrl, {
         gameid: gameID,
         env: envReq,
+        roomtype: roomType,
     }).then(function (resp){
         if (resp.status == 200){
             resp.json().then(data => {

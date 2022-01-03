@@ -1,7 +1,6 @@
 package src
 
 import (
-	"github.com/riceChuang/gamerobot/common"
 	"github.com/riceChuang/gamerobot/model"
 	"github.com/riceChuang/gamerobot/using/netproto"
 )
@@ -10,9 +9,9 @@ type QZPNLogic struct {
 	*GameBase
 }
 
-func NewQZPNLogic() (instance GameLogicBase) {
+func NewQZPNLogic(cfg *model.CommonCfg) (instance GameLogicBase) {
 	return &QZPNLogic{
-		GameBase: NewGameBase(common.GameID_QZPN),
+		GameBase: NewGameBase(cfg),
 	}
 }
 

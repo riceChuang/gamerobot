@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	log "github.com/sirupsen/logrus"
 	"github.com/riceChuang/gamerobot/common"
 	"github.com/riceChuang/gamerobot/framework"
 	"github.com/riceChuang/gamerobot/model"
@@ -13,6 +12,7 @@ import (
 	"github.com/riceChuang/gamerobot/usecase"
 	"github.com/riceChuang/gamerobot/util/config"
 	"github.com/riceChuang/gamerobot/util/logs"
+	log "github.com/sirupsen/logrus"
 
 	"net/http"
 )
@@ -44,10 +44,12 @@ func (h *UserController) GetIndex(ctx *gin.Context) {
 	//取得遊戲列表
 	allGames := game.GetAllGameInstance()
 	for game, instance := range allGames {
+		gcfg := instance.GetGameConfig()
 		resp.GameList[int32(game)] = &model.GameInfo{
-			GameID:  instance.GameID(),
-			Name:    instance.GameName(),
-			Buttons: instance.GetMessageBtn(),
+			GameID:   gcfg.GameID,
+			Name:     gcfg.GameName,
+			Buttons:  instance.GetMessageBtn(),
+			RoomType: gcfg.RoomType,
 		}
 	}
 	//取得環境列表
@@ -91,6 +93,21 @@ func (h *UserController) UserLogin(ctx *gin.Context) {
 		return
 	}
 
+	if request.RoomType == "" {
+		h.logger.Info("沒有設定房間index")
+		ctx.Error(model.ErrInvalidRequest)
+		return
+	}
+	gameInstance := game.GetInstanceByContentType(common.GameServerID(request.GameID))
+	gConfig := gameInstance.GetGameConfig()
+	var gameRoom string
+	for flag, room := range gConfig.RoomType {
+		if room == request.RoomType {
+			gameRoom = fmt.Sprintf("%v-%v", gConfig.GameID, flag+1)
+			break
+		}
+	}
+
 	var envInfo *model.EnvCfg
 	for _, env := range h.Config.Environment {
 		if env.ENV == request.Env {
@@ -103,14 +120,16 @@ func (h *UserController) UserLogin(ctx *gin.Context) {
 		ctx.Error(model.ErrInternalServerError)
 		return
 	}
-	var token string
-	token, err = h.useCase.DsgAPIBase.Login(envInfo.LoginDomain, envInfo.AgentID, request.UserName, request.Password, request.GameID)
+	var token, hallURL string
+	hallURL,token, err = h.useCase.DsgAPIBase.Login(envInfo.LoginDomain, envInfo.AgentID, request.UserName, request.Password, request.GameID)
 	if err != nil {
 		h.logger.Error(err)
 		ctx.Error(model.ErrInternalServerError)
 		return
 	}
-	h.logger.Info(token)
+	h.logger.Info(hallURL)
+
+	gameURL := h.useCase.AdminBase.GetGameWsURL(hallURL, gameRoom, request.UserName, token)
 
 	connManager := connect.GetClientGameCommunicateManager()
 	conn, err := connect.NewClientWsGameConn(ctx)
@@ -119,7 +138,7 @@ func (h *UserController) UserLogin(ctx *gin.Context) {
 		return
 	}
 	connManager.AddClient(conn)
-	conn.SetGameConn(connect.NewProtoConnect(framework.NewConn(token, nil)))
+	conn.SetGameConn(connect.NewProtoConnect(framework.NewConn(gameURL, nil)))
 	conn.SetGameID(common.GameServerID(request.GameID))
 
 	ctx.JSON(http.StatusOK, model.Resp{
@@ -167,6 +186,7 @@ func (h *UserController) WebSocketConn(ctx *gin.Context) {
 		return
 	}
 
+	//連線gameWS
 
 	return
 }

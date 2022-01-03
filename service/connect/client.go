@@ -2,28 +2,28 @@ package connect
 
 import (
 	"context"
-	uuid "github.com/satori/go.uuid"
-	log "github.com/sirupsen/logrus"
 	"github.com/riceChuang/gamerobot/common"
 	"github.com/riceChuang/gamerobot/framework"
 	"github.com/riceChuang/gamerobot/model"
 	"github.com/riceChuang/gamerobot/using/netproto"
 	"github.com/riceChuang/gamerobot/util"
 	"github.com/riceChuang/gamerobot/util/logs"
+	uuid "github.com/satori/go.uuid"
+	log "github.com/sirupsen/logrus"
 	"sync"
 	"time"
 )
 
 type ClientConn struct {
-	ctx              context.Context
-	ID               string
-	wsConn           *HttpConnect
-	gameConn         *ProtoConnect
-	Parser           framework.Parser
-	GameID           common.GameServerID
-	logger           *log.Entry
-	lock             sync.Mutex // readwrite lock
-	timerChan    chan bool
+	ctx       context.Context
+	ID        string
+	wsConn    *HttpConnect
+	gameConn  *ProtoConnect
+	Parser    framework.Parser
+	GameID    common.GameServerID
+	logger    *log.Entry
+	lock      sync.Mutex // readwrite lock
+	timerChan chan bool
 }
 
 func NewClientWsGameConn(ctx context.Context) (*ClientConn, error) {
@@ -51,7 +51,6 @@ func (client *ClientConn) SetGameConn(connect *ProtoConnect) {
 func (client *ClientConn) SetGameID(id common.GameServerID) {
 	client.GameID = id
 }
-
 
 func (client *ClientConn) ProtoConnect() error {
 	err := client.gameConn.Connect()
@@ -113,7 +112,6 @@ func (client *ClientConn) sendHeartBeat() {
 	}
 	client.gameConn.Write(message)
 }
-
 
 //收clinet ws 資訊
 //func (conn *ClientConn) ReadClientWS() ([]byte, error) {

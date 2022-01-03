@@ -3,47 +3,75 @@ package src
 import (
 	"github.com/riceChuang/gamerobot/common"
 	"github.com/riceChuang/gamerobot/model"
+	"github.com/riceChuang/gamerobot/util/config"
+	"sort"
 )
 
 type GameLogicBase interface {
-	GameID() int32
-	GameName() string
+	GetGameConfig() model.CommonCfg
 	GetMessageBtn() map[string]*model.Message
 	HandleMessage()
 	TransferMessage()
 }
 
 func CreateInstanceByContentType(gType common.GameServerID) (instance GameLogicBase) {
+	cfg := config.GetInstance()
+	var gamecfg = &model.CommonCfg{}
+	for _, game := range cfg.GameList {
+		if gType == common.GameServerID(game.GameID) {
+			gamecfg = &game
+			break
+		}
+	}
 	switch gType {
 	case common.GameID_QZPN:
-		return NewQZPNLogic()
+		return NewQZPNLogic(gamecfg)
 	case common.GameID_BYDH:
-		return NewBYDHLogic()
+		return NewBYDHLogic(gamecfg)
 	default:
 		return nil
 	}
 }
 
-
 type GameBase struct {
-	gid common.GameServerID
+	gid        common.GameServerID
+	gName      string
+	gRoomIndex map[int]string
+	gHallPort  int32
 }
 
-func NewGameBase(gameID common.GameServerID) *GameBase {
-	return &GameBase{
-		gid: gameID,
+func NewGameBase(cfg *model.CommonCfg) *GameBase {
+	gb := &GameBase{
+		gid:        common.GameServerID(cfg.GameID),
+		gName:      common.GameServerIDToString(common.GameServerID(cfg.GameID)),
+		gHallPort:  cfg.HallPort,
+		gRoomIndex: make(map[int]string),
 	}
+	for index, name := range cfg.RoomType {
+		gb.gRoomIndex[index] = name
+	}
+	return gb
 }
 
+func (gb *GameBase) GetGameConfig() model.CommonCfg {
+	gcfg := model.CommonCfg{
+		GameID:   int32(gb.gid),
+		GameName: gb.gName,
+		HallPort: gb.gHallPort,
+		RoomType: make([]string, 0, len(gb.gRoomIndex)),
+	}
 
-func (gb *GameBase) GameID() int32 {
-	return int32(gb.gid)
+	keys := make([]int, 0, len(gb.gRoomIndex))
+	for k := range gb.gRoomIndex {
+		keys = append(keys, k)
+	}
+	sort.Ints(keys)
+
+	for _, k := range keys {
+		gcfg.RoomType = append(gcfg.RoomType, gb.gRoomIndex[k])
+	}
+	return gcfg
 }
-
-func (gb *GameBase) GameName() string {
-	return common.GameServerIDToString(gb.gid)
-}
-
 
 func (gb *GameBase) HandleMessage() {
 
