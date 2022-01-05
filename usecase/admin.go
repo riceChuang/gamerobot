@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"github.com/riceChuang/gamerobot/service/connect"
+	"github.com/riceChuang/gamerobot/using/netproto"
 	"sync"
 	"time"
 )
@@ -10,32 +11,29 @@ var adminService *AdminService
 var adminServiceOnce = &sync.Once{}
 
 type AdminService struct {
-	GameListSvc connect.GameList
 }
 
 func NewAdminService() AdminUseCaseBase {
 	adminServiceOnce.Do(func() {
-		adminService = &AdminService{
-			GameListSvc: connect.NewGameListSvc(),
-		}
-
+		adminService = &AdminService{}
 	})
 	return adminService
 }
 
-func (as *AdminService) GetGameWsURL(hallURL string, gameRoom string, account string, token string) string {
+func (as *AdminService) GetGameWsInfo(hallURL string, gameRoom string, account string, token string) (url string, userinfo *netproto.UserLoginRet) {
 	var wg sync.WaitGroup
-	url := as.GameListSvc.GetGameWsURL(hallURL, gameRoom, account, token)
-	if url != "" {
-		return url
+	hallConnect := connect.NewHallConnect()
+	url, userinfo = hallConnect.GetGameWsInfo(hallURL, gameRoom, account, token)
+	if url != "" && userinfo != nil {
+		return
 	}
+	wg.Add(1)
 	go func() {
-		wg.Add(1)
 		for {
 			select {
 			case <-time.After(2 * time.Second):
-				url = as.GameListSvc.GetGameWsURL(hallURL, gameRoom, account, token)
-				if url != "" {
+				url, userinfo = hallConnect.GetGameWsInfo(hallURL, gameRoom, account, token)
+				if url != "" && userinfo != nil {
 					wg.Done()
 					return
 				}
@@ -44,5 +42,6 @@ func (as *AdminService) GetGameWsURL(hallURL string, gameRoom string, account st
 	}()
 
 	wg.Wait()
-	return url
+	hallConnect = nil
+	return
 }

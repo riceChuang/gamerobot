@@ -1,37 +1,39 @@
-package connect
+package framework
 
 import (
 	"fmt"
-	"github.com/riceChuang/gamerobot/framework"
 	"github.com/riceChuang/gamerobot/model"
+	"github.com/riceChuang/gamerobot/using/netproto"
 	"github.com/riceChuang/gamerobot/util"
 	"github.com/riceChuang/gamerobot/util/logs"
 	log "github.com/sirupsen/logrus"
+	"strconv"
 	"sync"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 )
 
 // Client wrapper ws and decoder
 type ProtoConnect struct {
-	conn            *framework.Conn
-	Parser          framework.Parser
+	conn            *Conn
+	Parser          Parser
 	evtChan         *model.EventChan
 	innerHandler    sync.Map
 	onCloseDelegate func() // if socket dead by read / dispatch / write error, please take error from here
 	unHandleBytes   []byte
-	lock            sync.Mutex    // readwrite lock
+	lock            sync.Mutex // readwrite lock
 	logger          *log.Entry // inner Logger
-	Account   string
-	Token     string
+	timerChan       chan bool
 }
 
-func NewProtoConnect(conn *framework.Conn) *ProtoConnect {
+func NewProtoConnect(conn *Conn) *ProtoConnect {
 	pc := &ProtoConnect{
-		conn:   conn,
+		conn: conn,
 		logger: logs.GetLogger().WithFields(log.Fields{
 			"server": "proto_client",
 		}),
+		Parser: &model.ByteParser{},
 	}
 	// pc.innerHandler = make(map[string]*msg.Handler)
 	pc.innerHandler = sync.Map{}
@@ -53,6 +55,7 @@ func (pc *ProtoConnect) Connect() error {
 	go pc.read()
 	go pc.handMsg()
 	go pc.write()
+	pc.initHeartBeat()
 	return nil
 }
 
@@ -96,6 +99,68 @@ func (pc *ProtoConnect) Register(h *model.Handler) error {
 // UnRegister Handler ...
 func (pc *ProtoConnect) UnRegister(h *model.Handler) {
 	pc.innerHandler.Delete(h.String())
+}
+
+func (pc *ProtoConnect) GetConnectURL() string {
+	if pc.conn != nil {
+		return pc.conn.URL
+	}
+	return ""
+}
+
+func (pc *ProtoConnect) initHeartBeat() {
+	pc.Register(&model.Handler{
+		BClassID:  int32(netproto.MessageBClassID_Common),
+		SClassID:  int32(netproto.PlatformCommonClassID_HeartBeatConfigID),
+		MsgType:   &netproto.HeartBeatConfig{},
+		OnMessage: pc.onHeartBeatCfg,
+	})
+
+	pc.requestHeartBeatCfg()
+}
+
+func (pc *ProtoConnect) requestHeartBeatCfg() {
+	message, err := model.NewProto(
+		int32(netproto.MessageBClassID_Common),
+		int32(netproto.PlatformCommonClassID_RequestHeartBeatConfigID),
+		nil,
+	)
+
+	if err != nil {
+		pc.logger.Println("Error: send heart beat failed", err.Error())
+	}
+	pc.logger.Infof("[請求requestHeartBeatCfg]")
+	pc.Write(message)
+}
+
+func (pc *ProtoConnect) onHeartBeatCfg(b interface{}) {
+	data, ok := b.(*netproto.HeartBeatConfig)
+	if !ok {
+		// should kill robot
+		pc.logger.Panic("Error: Data Type Wrong!")
+		return
+	}
+	pc.logger.Infof("[收到requestHeartBeatCfg]")
+	//pc.logger.Println("onHeartBeatCfg:", data.String())
+
+	if pc.timerChan != nil {
+		pc.timerChan <- true
+	}
+	pc.timerChan = util.NewTicker(pc.sendHeartBeat, time.Duration(data.GetBeatInterval())*time.Second)
+}
+
+func (pc *ProtoConnect) sendHeartBeat() {
+	message, err := model.NewProto(
+		int32(netproto.MessageBClassID_Common),
+		int32(netproto.PlatformCommonClassID_HeartBeatID),
+		nil,
+	)
+
+	if err != nil {
+		pc.logger.Println("Error: send heart beat failed", err.Error())
+	}
+	//pc.logger.Debug("[發送心跳]")
+	pc.Write(message)
 }
 
 func (pc *ProtoConnect) read() {
@@ -191,19 +256,37 @@ ForWrite:
 }
 
 func (pc *ProtoConnect) dispatch(m *model.Message) {
-	if data, ok := pc.innerHandler.Load(m.String()); ok {
-		h := data.(*model.Handler)
-		pc.logger.Println("dispatch message", m.GetName())
-		if h.MsgType != nil {
-			if err := proto.Unmarshal(m.Data.([]byte), h.MsgType); err != nil {
-				pc.logger.Println("client proto unmarshal error: ", err.Error(), fmt.Sprintf("%+v", m.Data))
-				pc.evtChan.ErrSig <- err
-				return
-			}
+	if data, ok := pc.innerHandler.Load(strconv.Itoa(int(m.BClassID))); ok {
+		if innerData, k := pc.innerHandler.Load(m.String()); k {
+			h := innerData.(*model.Handler)
+			pc.sendMessage(m, h)
+			return
 		}
-		go h.OnMessage(h.MsgType)
+		//若沒有指定則送Bclass層級
+		h := data.(*model.Handler)
+		pc.sendMessage(m, h)
+		return
+	}
+
+	if innerData, k := pc.innerHandler.Load(m.String()); k {
+		h := innerData.(*model.Handler)
+		pc.sendMessage(m, h)
+		return
+	}
+}
+
+func (pc *ProtoConnect) sendMessage(m *model.Message, h *model.Handler) {
+	pc.logger.Println("dispatch message", m.GetName())
+	if h.MsgType != nil {
+		if err := proto.Unmarshal(m.Data.([]byte), h.MsgType); err != nil {
+			pc.logger.Println("client proto unmarshal error: ", err.Error(), fmt.Sprintf("%+v", m.Data))
+			pc.evtChan.ErrSig <- err
+			return
+		}
+		h.OnMessage(h.MsgType)
+		return
 	} else {
-		// pc.iLog.Println("no hander exist drop: ", m.GetName())
+		h.OnMessage(m)
 	}
 }
 

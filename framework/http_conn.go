@@ -1,26 +1,25 @@
-package connect
+package framework
 
 import (
 	"encoding/json"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"github.com/riceChuang/gamerobot/common"
-	"github.com/riceChuang/gamerobot/framework"
 	"github.com/riceChuang/gamerobot/model"
 	"github.com/riceChuang/gamerobot/util/logs"
+	log "github.com/sirupsen/logrus"
 	"sync"
 )
 
 // Client wrapper ws and decoder
 type HttpConnect struct {
-	conn             *framework.Conn
+	conn             *Conn
 	innerHandler     sync.Map
 	lock             sync.Mutex // readwrite lock
 	logger           *log.Entry // inner Logger
 	ClientID         string
 }
 
-func NewHttpConnect(conn *framework.Conn) *HttpConnect {
+func NewHttpConnect(conn *Conn) *HttpConnect {
 	hc := &HttpConnect{
 		conn: conn,
 		logger: logs.GetLogger().WithFields(log.Fields{
@@ -113,7 +112,7 @@ func (hc *HttpConnect) read() {
 			ClientID: hc.ClientID,
 			Data:     msg,
 		}
-		framework.GetClientDispatcher().AddMessage(wsMessage)
+		GetClientDispatcher().AddMessage(wsMessage)
 	}
 	return
 }

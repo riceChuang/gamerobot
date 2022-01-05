@@ -5,5 +5,5 @@ games:
     roomtype: ['string1', 'string2', 'string3', 'string4', 'string5', 'string6']
   - name: "QZPN"
     gameid: 30
-    hallport: 5013
+    hallport: 5014
     roomtype: ['string1', 'string2', 'string3', 'string4', 'string5', 'string6']

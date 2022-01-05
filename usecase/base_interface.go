@@ -1,14 +1,19 @@
 package usecase
 
+import (
+	"github.com/riceChuang/gamerobot/model"
+	"github.com/riceChuang/gamerobot/using/netproto"
+)
+
 type DsgAPIBase interface {
 	//玩家登入
-	Login(loginDomain string, agentID int, account string, password string, gameID int32) (url string, token string, err error)
+	Login(loginReq *model.DSGLoginReq) (loginResp *model.DSGLoginResp, err error)
 	//入金
 	StoreMoney(loginDomain string, agentID int, account string, money int32) (int32, error)
 }
 
 type AdminUseCaseBase interface {
-	GetGameWsURL(hallURL string, gameRoom string, account string, token string) string
+	GetGameWsInfo(hallURL string, gameRoom string, account string, token string) (string, *netproto.UserLoginRet)
 }
 
 type UseCase struct {

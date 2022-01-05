@@ -120,26 +120,43 @@ func (h *UserController) UserLogin(ctx *gin.Context) {
 		ctx.Error(model.ErrInternalServerError)
 		return
 	}
-	var token, hallURL string
-	hallURL,token, err = h.useCase.DsgAPIBase.Login(envInfo.LoginDomain, envInfo.AgentID, request.UserName, request.Password, request.GameID)
+
+	dsgLoginReq := &model.DSGLoginReq{
+		LoginDomain: envInfo.LoginDomain,
+		AgentID:     envInfo.AgentID,
+		Account:     request.UserName,
+		Password:    request.Password,
+		GameID:      request.GameID,
+	}
+	//取得token
+	var dsgLoginResp *model.DSGLoginResp
+	dsgLoginResp, err = h.useCase.DsgAPIBase.Login(dsgLoginReq)
 	if err != nil {
 		h.logger.Error(err)
 		ctx.Error(model.ErrInternalServerError)
 		return
 	}
-	h.logger.Info(hallURL)
+	h.logger.Info(dsgLoginResp.URL)
+	//取得token 後 用token取得向hall大廳取得遊戲port號
+	hallURL := fmt.Sprintf("%s:%d", envInfo.ServerURL, gConfig.HallPort)
+	gamePort, userInfo := h.useCase.AdminBase.GetGameWsInfo(hallURL, gameRoom, dsgLoginResp.UserName, dsgLoginResp.Token)
 
-	gameURL := h.useCase.AdminBase.GetGameWsURL(hallURL, gameRoom, request.UserName, token)
+	//取得遊戲port號後 新增game connect
+	gameURL := fmt.Sprintf("%s:%s", envInfo.ServerURL, gamePort)
+	gameConnect := connect.NewGameConnect(framework.NewProtoConnect(framework.NewConn(gameURL, nil)), userInfo)
 
-	connManager := connect.GetClientGameCommunicateManager()
+	//新增client conn
 	conn, err := connect.NewClientWsGameConn(ctx)
 	if err != nil {
 		h.logger.Error("conn error: %v", err)
 		return
 	}
-	connManager.AddClient(conn)
-	conn.SetGameConn(connect.NewProtoConnect(framework.NewConn(gameURL, nil)))
+	conn.SetGameConn(gameConnect)
 	conn.SetGameID(common.GameServerID(request.GameID))
+
+	//將client conn 加入到manager中
+	connManager := connect.GetClientGameCommunicateManager()
+	connManager.AddClient(conn)
 
 	ctx.JSON(http.StatusOK, model.Resp{
 		Code:    http.StatusOK,
@@ -177,7 +194,7 @@ func (h *UserController) WebSocketConn(ctx *gin.Context) {
 		return
 	}
 	connection := framework.NewConn("", ws)
-	wsConnection := connect.NewHttpConnect(connection)
+	wsConnection := framework.NewHttpConnect(connection)
 	conn.SetWsConn(wsConnection)
 
 	err = wsConnection.Connect()
@@ -187,6 +204,10 @@ func (h *UserController) WebSocketConn(ctx *gin.Context) {
 	}
 
 	//連線gameWS
-
+	err = conn.ProtoConnect()
+	if err != nil {
+		h.logger.Error(err)
+		return
+	}
 	return
 }

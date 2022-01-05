@@ -8,25 +8,26 @@ import (
 	"github.com/riceChuang/gamerobot/using/netproto"
 	"github.com/riceChuang/gamerobot/util/logs"
 	log "github.com/sirupsen/logrus"
+	"strconv"
 	"sync"
-	"time"
 )
 
-type GameList interface {
-	GetGameWsURL(hallURL string, gameRoom string, account string, token string) string
+type HallConnectInterface interface {
+	GetGameWsInfo(hallURL string, gameRoom string, account string, token string) (string, *netproto.UserLoginRet)
 }
 
-type GameListSvc struct {
+type HallConnect struct {
 	gameList map[string]string // map[gameid-flag] =port
+	userInfo *netproto.UserLoginRet
 	logger   *log.Entry
 	Account  string
 	Token    string
-	hallWS   *ProtoConnect
+	hallWS   *framework.ProtoConnect
 	mu       sync.Mutex
 }
 
-func NewGameListSvc() GameList {
-	return &GameListSvc{
+func NewHallConnect() HallConnectInterface {
+	return &HallConnect{
 		gameList: make(map[string]string),
 		logger: logs.GetLogger().WithFields(log.Fields{
 			"server": "GameListSvc",
@@ -34,27 +35,27 @@ func NewGameListSvc() GameList {
 	}
 }
 
-func (gs *GameListSvc) GetGameWsURL(hallURL string, gameRoom string, account string, token string) string {
+func (gs *HallConnect) GetGameWsInfo(hallURL string, gameRoom string, account string, token string) (string, *netproto.UserLoginRet) {
 	gs.mu.Lock()
 	defer gs.mu.Unlock()
-	if url, ok := gs.gameList[gameRoom]; ok {
-		return url
-	} else if gs.hallWS != nil && gs.hallWS.conn.URL == hallURL {
-		return ""
+	if url, ok := gs.gameList[gameRoom]; ok && gs.userInfo != nil {
+		return url, gs.userInfo
+	} else if gs.hallWS != nil && gs.hallWS.GetConnectURL() == hallURL {
+		return "", nil
 	} else {
 		gs.Account = account
 		gs.Token = token
 		gs.InitHallWs(hallURL)
 	}
-	return ""
+	return "", nil
 }
 
 // InitHallWs ...
-func (gs *GameListSvc) InitHallWs(hallURL string) {
+func (gs *HallConnect) InitHallWs(hallURL string) {
 	gs.CleanHs()
 	//URL := fmt.Sprintf("%s:%d", gs.GameEnvCfg.ServerURL, gs.CommonCfg.HallPort)
 	conn := framework.NewConn(hallURL, nil)
-	gs.hallWS = NewProtoConnect(conn)
+	gs.hallWS = framework.NewProtoConnect(conn)
 
 	gs.hallWS.Register(&model.Handler{
 		BClassID:  int32(netproto.MessageBClassID_Hall),
@@ -75,7 +76,7 @@ func (gs *GameListSvc) InitHallWs(hallURL string) {
 }
 
 // CleanHs ...
-func (gs *GameListSvc) CleanHs() {
+func (gs *HallConnect) CleanHs() {
 	gs.logger.Infof("[DEBUG][Manager][CleanHs] ----")
 	if gs.hallWS != nil {
 		gs.hallWS.Clean()
@@ -83,7 +84,7 @@ func (gs *GameListSvc) CleanHs() {
 	}
 }
 
-func (gs *GameListSvc) onServerListRet(msg interface{}) {
+func (gs *HallConnect) onServerListRet(msg interface{}) {
 	data, ok := msg.(*netproto.AllGameServerInfo)
 	if !ok {
 		gs.logger.Println("Error: Data Type Wrong!")
@@ -94,23 +95,24 @@ func (gs *GameListSvc) onServerListRet(msg interface{}) {
 	gs.logger.Infof("onServerListRet: %+v, user:%v", data.String(), gs.Account)
 	for _, gameInfo := range data.GetServerList() {
 		gameIndex := fmt.Sprintf("%v-%v", gameInfo.GetGameID(), gameInfo.GetFlag())
-		gs.gameList[gameIndex] = string(gameInfo.GetPort())
+		gs.gameList[gameIndex] = strconv.Itoa(int(gameInfo.GetPort()))
 	}
-	go func() {
-		time.Sleep(time.Second * 5)
-		gs.CleanHs()
-		return
-	}()
+	//go func() {
+	//	time.Sleep(time.Second * 5)
+	//	gs.CleanHs()
+	//	return
+	//}()
 	return
 }
 
-func (gs *GameListSvc) onLoginRet(msg interface{}) {
+func (gs *HallConnect) onLoginRet(msg interface{}) {
 	data, ok := msg.(*netproto.UserLoginRet)
 	if !ok {
 		log.Println("Error: Data Type Wrong!")
 		return
 	}
 	gs.logger.Infof("OnLoginRet: %v, user :%v", data.String(), gs.Account)
+	gs.userInfo = data
 	if data.GetCode() == 1 {
 		gs.RequestServerListInfo()
 	} else {
@@ -120,7 +122,7 @@ func (gs *GameListSvc) onLoginRet(msg interface{}) {
 	}
 }
 
-func (gs *GameListSvc) requestLoginHall() {
+func (gs *HallConnect) requestLoginHall() {
 	gs.Request(
 		gs.hallWS,
 		int32(netproto.MessageBClassID_Hall),
@@ -139,7 +141,7 @@ func (gs *GameListSvc) requestLoginHall() {
 }
 
 // RequestServerListInfo ...
-func (gs *GameListSvc) RequestServerListInfo() {
+func (gs *HallConnect) RequestServerListInfo() {
 	gs.Request(
 		gs.hallWS,
 		int32(netproto.MessageBClassID_Hall),
@@ -151,7 +153,7 @@ func (gs *GameListSvc) RequestServerListInfo() {
 }
 
 // Request send and handle protoMsg Error
-func (gs *GameListSvc) Request(ws *ProtoConnect, bclsID int32, sclsID int32, protoData interface{}) {
+func (gs *HallConnect) Request(ws *framework.ProtoConnect, bclsID int32, sclsID int32, protoData interface{}) {
 	message, err := model.NewProto(bclsID, sclsID, protoData)
 
 	// should kill robot

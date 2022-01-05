@@ -34,7 +34,7 @@ type ClientGameCommunicateManager struct {
 	logger       *log.Entry
 	parser       framework.Parser
 	gameWSUrlMap map[string]string
-	hallWS       *ProtoConnect
+	hallWS       *framework.ProtoConnect
 }
 
 func NewClientWsToGameServer(wsAddr string) *ClientGameCommunicateManager {

@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"github.com/riceChuang/gamerobot/model"
 	"github.com/riceChuang/gamerobot/util/crypt"
 	"io"
 	"io/ioutil"
@@ -36,44 +37,55 @@ var (
 )
 
 // Login to get token
-func (ds *DSGApiService) Login(loginDomain string, agentID int, account string, password string, gameID int32) (url string, token string, err error) {
+func (ds *DSGApiService) Login(loginReq *model.DSGLoginReq) (loginResp *model.DSGLoginResp, err error) {
 	timestamp := time.Now().Unix() // s
-	param := ds.getLoginParam(account, password, gameID)
-	postURL := ds.getPostURL(loginDomain, 8200, agentID, param, timestamp)
+	param := ds.getLoginParam(loginReq.Account, password, loginReq.GameID)
+	postURL := ds.getPostURL(loginReq.LoginDomain, 8200, loginReq.AgentID, param, timestamp)
 
 	resp, err := http.Post(postURL,
 		"application/x-www-form-urlencoded",
 		strings.NewReader("test"),
 	)
 	if err != nil {
-		return "", "",fmt.Errorf("err: %s", err.Error())
+		return nil, fmt.Errorf("err: %s", err.Error())
 	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "","", fmt.Errorf("err: %s", err.Error())
+		return nil, fmt.Errorf("err: %s", err.Error())
 	}
 
 	var jsonObj map[string]interface{}
 	if err := json.Unmarshal(body, &jsonObj); err != nil {
-		return "","", fmt.Errorf("err: %s", err.Error())
+		return nil, fmt.Errorf("err: %s", err.Error())
 	}
 
 	if s, ok := jsonObj["s"]; ok {
 		if d, ok := jsonObj["d"]; s.(float64) == 100 && ok {
 			fmt.Printf("Get Login Res %+v\n", jsonObj)
 			if hallUrl, ok := d.(map[string]interface{})["url"]; ok {
-				tokens := strings.Split(hallUrl.(string), "token=")
-				if len(tokens) > 2 {
-					return hallUrl.(string), tokens[1], nil
+
+				loginResp = &model.DSGLoginResp{
+					URL: hallUrl.(string),
 				}
+
+				tokens := strings.Split(hallUrl.(string), "token=")
+				if len(tokens) >= 2 {
+					loginResp.Token = tokens[1]
+				}
+
+				acoounts := strings.Split(hallUrl.(string), "account=")
+				if len(acoounts) >= 2 {
+					loginResp.UserName = acoounts[1]
+				}
+				return
 			} else {
-				return "","", fmt.Errorf("LoginFail: res data %s", string(body))
+				return nil, fmt.Errorf("LoginFail: res data %s", string(body))
 			}
 		}
 	}
-	return "","", fmt.Errorf("LoginFail: res data %s", string(body))
+	return nil, fmt.Errorf("LoginFail: res data %s", string(body))
 }
 
 // Login to get token
