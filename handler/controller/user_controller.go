@@ -6,9 +6,9 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/riceChuang/gamerobot/common"
 	"github.com/riceChuang/gamerobot/framework"
+	"github.com/riceChuang/gamerobot/framework/gametype"
 	"github.com/riceChuang/gamerobot/model"
 	"github.com/riceChuang/gamerobot/service/connect"
-	"github.com/riceChuang/gamerobot/service/game"
 	"github.com/riceChuang/gamerobot/usecase"
 	"github.com/riceChuang/gamerobot/util/config"
 	"github.com/riceChuang/gamerobot/util/logs"
@@ -40,18 +40,20 @@ func (h *UserController) GetIndex(ctx *gin.Context) {
 		GameList: make(map[int32]*model.GameInfo),
 		Envs:     []string{},
 	}
-
 	//取得遊戲列表
-	allGames := game.GetAllGameInstance()
-	for game, instance := range allGames {
-		gcfg := instance.GetGameConfig()
-		resp.GameList[int32(game)] = &model.GameInfo{
-			GameID:   gcfg.GameID,
-			Name:     gcfg.GameName,
-			Buttons:  instance.GetMessageBtn(),
-			RoomType: gcfg.RoomType,
+	for _ , game := range h.Config.GameList {
+		instance := gametype.GetInstanceByContentType(common.GameServerID(game.GameID))
+		if instance == nil {
+			continue
+		}
+		resp.GameList[game.GameID] = &model.GameInfo{
+			GameID:   game.GameID,
+			Name:     common.GameServerIDToString(common.GameServerID(game.GameID)),
+			Buttons:  instance.GetGameHandler().GetMessageBtn(),
+			RoomType: game.RoomType,
 		}
 	}
+
 	//取得環境列表
 	for _, value := range h.Config.Environment {
 		resp.Envs = append(resp.Envs, value.ENV)
@@ -98,7 +100,7 @@ func (h *UserController) UserLogin(ctx *gin.Context) {
 		ctx.Error(model.ErrInvalidRequest)
 		return
 	}
-	gameInstance := game.GetInstanceByContentType(common.GameServerID(request.GameID))
+	gameInstance := gametype.GetInstanceByContentType(common.GameServerID(request.GameID))
 	gConfig := gameInstance.GetGameConfig()
 	var gameRoom string
 	for flag, room := range gConfig.RoomType {

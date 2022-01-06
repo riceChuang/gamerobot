@@ -1,23 +1,26 @@
 package connect
 
 import (
+	"github.com/riceChuang/gamerobot/common"
 	"github.com/riceChuang/gamerobot/framework"
+	"github.com/riceChuang/gamerobot/framework/gametype"
 	"github.com/riceChuang/gamerobot/model"
 	"github.com/riceChuang/gamerobot/using/netproto"
 	"github.com/riceChuang/gamerobot/util/logs"
 	log "github.com/sirupsen/logrus"
 	"sync"
-	"time"
 )
 
 type GameConnectInterface interface {
 }
 
 type GameConnect struct {
+	ClientID string
 	logger   *log.Entry
 	GameWS   *framework.ProtoConnect
 	mu       sync.Mutex
 	userInfo *netproto.UserLoginRet
+	gameType *gametype.GameType
 }
 
 func NewGameConnect(gameWS *framework.ProtoConnect, uinfo *netproto.UserLoginRet) *GameConnect {
@@ -27,6 +30,7 @@ func NewGameConnect(gameWS *framework.ProtoConnect, uinfo *netproto.UserLoginRet
 			"server": "GameConnect",
 		}),
 		userInfo: uinfo,
+		//gameType:
 	}
 }
 
@@ -41,15 +45,12 @@ func (gc *GameConnect) ConnectGameWs() {
 
 	gc.GameWS.Register(&model.Handler{
 		BClassID:  int32(netproto.MessageBClassID_GameRoom),
+		SClassID:  0,
 		OnMessage: gc.onGameMessage,
 	})
 
 	gc.GameWS.Connect()
-	go func() {
-		time.Sleep(2 * time.Second)
-		gc.requestLoginGame()
-	}()
-
+	gc.requestLoginGame()
 }
 
 //request GameWs
@@ -83,6 +84,13 @@ func (gc *GameConnect) onGameMessage(msg interface{}) {
 		gc.logger.Error("Error: data transfer fail")
 	}
 	gc.logger.Infof("收到game消息封包 data:%v", message.GetName())
+	wsMessage := &model.WSMessage{
+		From:     common.Game,
+		To:       common.GameServerTransfer,
+		ClientID: gc.ClientID,
+		Msg:     message,
+	}
+	framework.GetGameDispatcher().AddMessage(wsMessage)
 }
 
 // Request send and handle protoMsg Error

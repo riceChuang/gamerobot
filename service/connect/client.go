@@ -38,6 +38,7 @@ func (client *ClientConn) SetWsConn(connect *framework.HttpConnect) {
 }
 
 func (client *ClientConn) SetGameConn(connect *GameConnect) {
+	connect.ClientID = client.ID
 	client.gameConn = connect
 }
 

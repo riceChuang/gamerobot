@@ -1,27 +1,13 @@
-package src
+package bydh
 
 import (
-	"github.com/riceChuang/gamerobot/common"
+	"github.com/riceChuang/gamerobot/framework/gamefactory"
 	"github.com/riceChuang/gamerobot/model"
 	"github.com/riceChuang/gamerobot/using/netproto"
 )
 
 type BYDHLogic struct {
-	Gameid common.GameServerID
-}
-
-func NewBYDHLogic() (instance GameLogicBase) {
-	return &BYDHLogic{
-		Gameid: common.GameID_BYDH,
-	}
-}
-
-func (bydh *BYDHLogic) GameID() int32 {
-	return int32(bydh.Gameid)
-}
-
-func (bydh *BYDHLogic) GameName() string {
-	return common.GameServerIDToString(bydh.Gameid)
+	*gamefactory.Base
 }
 
 func (bydh *BYDHLogic)GetMessageBtn() map[string]*model.Message{
@@ -39,4 +25,8 @@ func (bydh *BYDHLogic)GetMessageBtn() map[string]*model.Message{
 			SClassID: int32(netproto.BYDH_GameMessageClassID_BYDHRewardBaoXiangID),
 		},
 	}
+}
+
+func (bydh *BYDHLogic) HandleMessage(message *model.WSMessage) {
+
 }

@@ -107,10 +107,10 @@ func (hc *HttpConnect) read() {
 		}
 
 		wsMessage := &model.WSMessage{
-			From:     common.ClientToServer,
-			To:       common.ServerToTransfer,
+			From:     common.Client,
+			To:       common.ClientServerTransfer,
 			ClientID: hc.ClientID,
-			Data:     msg,
+			Msg:     msg,
 		}
 		GetClientDispatcher().AddMessage(wsMessage)
 	}

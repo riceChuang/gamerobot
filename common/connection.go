@@ -10,9 +10,10 @@ const (
 type PasserType string
 
 const (
-	ClientToServer   PasserType = "client_to_server"
-	GameToServer     PasserType = "game_to_server"
-	ServerToTransfer PasserType = "server_to_transfer"
-	TransferToClient PasserType = "transfer_to_client"
-	TransferToGame   PasserType = "transfer_to_game"
+	Client               PasserType = "client"
+	Game                 PasserType = "game"
+	ClientServerTransfer PasserType = "client_server_transfer"
+	GameServerTransfer   PasserType = "game_server_transfer"
+	ClientSender         PasserType = "client_sender"
+	GameSender           PasserType = "game_sender"
 )

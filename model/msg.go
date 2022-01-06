@@ -6,7 +6,7 @@ type WSMessage struct {
 	From     common.PasserType
 	To       common.PasserType
 	ClientID string
-	Data     *Message
+	Msg     *Message
 }
 
 // eventChan ...

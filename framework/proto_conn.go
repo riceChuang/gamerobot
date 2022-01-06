@@ -7,7 +7,6 @@ import (
 	"github.com/riceChuang/gamerobot/util"
 	"github.com/riceChuang/gamerobot/util/logs"
 	log "github.com/sirupsen/logrus"
-	"strconv"
 	"sync"
 	"time"
 
@@ -256,7 +255,7 @@ ForWrite:
 }
 
 func (pc *ProtoConnect) dispatch(m *model.Message) {
-	if data, ok := pc.innerHandler.Load(strconv.Itoa(int(m.BClassID))); ok {
+	if data, ok := pc.innerHandler.Load(fmt.Sprintf("%d:0", m.BClassID)); ok {
 		if innerData, k := pc.innerHandler.Load(m.String()); k {
 			h := innerData.(*model.Handler)
 			pc.sendMessage(m, h)
