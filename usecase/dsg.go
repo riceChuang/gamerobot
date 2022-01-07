@@ -89,41 +89,43 @@ func (ds *DSGApiService) Login(loginReq *model.DSGLoginReq) (loginResp *model.DS
 }
 
 // Login to get token
-func (ds *DSGApiService) StoreMoney(loginDomain string, agentID int, account string, money int32) (int32, error) {
+func (ds *DSGApiService) StoreMoney(storeReq *model.DSGStoreMoneyReq) (storeResp *model.DSGStoreMoneyResp, err error) {
 	timestamp := time.Now().Unix() // s
-	score := money * 100
-	param := ds.getStoreParam(account, score, timestamp)
-	postURL := ds.getPostURL(loginDomain, 8200, agentID, param, timestamp)
+	score := storeReq.Money * 100
+	param := ds.getStoreParam(storeReq.Account, score, timestamp)
+	postURL := ds.getPostURL(storeReq.LoginDomain, 8200, storeReq.AgentID, param, timestamp)
 
 	resp, err := http.Post(postURL,
 		"application/x-www-form-urlencoded",
 		strings.NewReader("test"),
 	)
 	if err != nil {
-		return 0, fmt.Errorf("err: %s", err.Error())
+		return nil, fmt.Errorf("err: %s", err.Error())
 	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return 0, fmt.Errorf("err: %s", err.Error())
+		return nil, fmt.Errorf("err: %s", err.Error())
 	}
 
 	var jsonObj map[string]interface{}
 	if err := json.Unmarshal(body, &jsonObj); err != nil {
-		return 0, fmt.Errorf("err: %s", err.Error())
+		return nil, fmt.Errorf("err: %s", err.Error())
 	}
 
 	if s, ok := jsonObj["s"]; ok {
 		if d, ok := jsonObj["d"]; s.(float64) == 102 && ok {
 			fmt.Printf("Get Store Res %+v\n", jsonObj)
 			if money, ok := d.(map[string]interface{})["money"]; ok {
-				return int32(money.(float64)), nil
+				return &model.DSGStoreMoneyResp{
+					Money: int32(money.(float64)),
+				}, nil
 			}
-			return 0, fmt.Errorf("StoreFail: res data %s", string(body))
+			return nil, fmt.Errorf("StoreFail: res data %s", string(body))
 		}
 	}
-	return 0, fmt.Errorf("StoreFail: res data %s", string(body))
+	return nil, fmt.Errorf("StoreFail: res data %s", string(body))
 }
 
 func (ds *DSGApiService) getStoreParam(account string, money int32, timestamp int64) string {

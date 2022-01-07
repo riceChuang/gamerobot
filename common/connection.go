@@ -17,3 +17,11 @@ const (
 	ClientSender         PasserType = "client_sender"
 	GameSender           PasserType = "game_sender"
 )
+
+
+type ConnectType int32
+
+const (
+	HttpConnect ConnectType = 1
+	GameConnect ConnectType = 2
+)

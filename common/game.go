@@ -54,7 +54,6 @@ func GameServerIDToString(id GameServerID) string {
 	return GameServerID_Name[id]
 }
 
-
 // Env ...
 type Env string
 
@@ -65,4 +64,21 @@ const (
 	RELEASE Env = "RELEASE"
 	FEATURE Env = "FEATURE"
 	RTP     Env = "RTP"
+)
+
+type StateValue int32
+
+const (
+	// StateValueFree 用户站立状态
+	StateValueFree StateValue = 0
+	// StateValueQueue 用户排队状态
+	StateValueQueue StateValue = 1
+	// StateValueSit 用户坐下状态
+	StateValueSit StateValue = 2
+	// StateValueReady 用户举手状态
+	StateValueReady StateValue = 3
+	// StateValueGame 用户游戏状态
+	StateValueGame StateValue = 4
+	// StateValueOffline 用户断线状态
+	StateValueOffline StateValue = 5
 )

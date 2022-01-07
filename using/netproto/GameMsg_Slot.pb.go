@@ -649,7 +649,7 @@ type Slot_SymbolPayTable struct {
 
 	Symbol *Slot_Symbol `protobuf:"bytes,1,req,name=Symbol" json:"Symbol,omitempty"`  // Symbol
 	Count  *int32       `protobuf:"varint,2,req,name=Count" json:"Count,omitempty"`   // 連續幾個Symbol
-	Type   *string      `protobuf:"bytes,3,req,name=Type" json:"Type,omitempty"`      // 獎項類型。 chip: 賠倍率, jackpot: 中jackpot, pickgame: 中bonus gamefactory
+	Type   *string      `protobuf:"bytes,3,req,name=Type" json:"Type,omitempty"`      // 獎項類型。 chip: 賠倍率, jackpot: 中jackpot, pickgame: 中bonus gamehandler
 	Payout *int32       `protobuf:"varint,4,req,name=Payout" json:"Payout,omitempty"` // 該項獎勵數量。 chip: 倍率, jackpot: 最大出獎金額, pickgame: 幾pick
 	Title  *string      `protobuf:"bytes,5,opt,name=Title" json:"Title,omitempty"`    // 符號在賠付表要顯示的標題
 	Desc   *string      `protobuf:"bytes,6,opt,name=Desc" json:"Desc,omitempty"`      // 符號在賠付表要顯示的說明

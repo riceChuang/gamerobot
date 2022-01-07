@@ -1,4 +1,4 @@
-package framework
+package util
 
 import (
 	"github.com/riceChuang/gamerobot/common"
@@ -76,13 +76,13 @@ func (dp *Dispatch) DeleteMsgPasser(name string) bool {
 }
 
 func (dp *Dispatch) handleMsg() {
-	defer func() {
-		if r := recover(); r != nil {
-			logs.GetLogger().Error("handleMsg error:%v", r.(error))
-			go dp.handleMsg()
-			return
-		}
-	}()
+	//defer func() {
+	//	if r := recover(); r != nil {
+	//		logs.GetLogger().Error("handleMsg error:%v", r.(error))
+	//		go dp.handleMsg()
+	//		return
+	//	}
+	//}()
 
 HandleLoop:
 	for {

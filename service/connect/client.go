@@ -3,7 +3,10 @@ package connect
 import (
 	"context"
 	"github.com/riceChuang/gamerobot/common"
-	"github.com/riceChuang/gamerobot/framework"
+	"github.com/riceChuang/gamerobot/framework/connection/connect"
+	"github.com/riceChuang/gamerobot/framework/connection/connecttype"
+	"github.com/riceChuang/gamerobot/game/gametype"
+	"github.com/riceChuang/gamerobot/util"
 	"github.com/riceChuang/gamerobot/util/logs"
 	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
@@ -11,14 +14,15 @@ import (
 )
 
 type ClientConn struct {
-	ctx       context.Context
-	ID        string
-	wsConn    *framework.HttpConnect
-	gameConn  *GameConnect
-	Parser    framework.Parser
-	GameID    common.GameServerID
-	logger    *log.Entry
-	lock      sync.Mutex // readwrite lock
+	ctx      context.Context
+	ID       string
+	wsConn   *connect.HttpConnect
+	gameConn *connecttype.GameConnect
+	GameID   common.GameServerID
+	GameType gametype.GameType
+	Parser   util.Parser
+	logger   *log.Entry
+	lock     sync.Mutex // readwrite lock
 }
 
 func NewClientWsGameConn(ctx context.Context) (*ClientConn, error) {
@@ -26,29 +30,52 @@ func NewClientWsGameConn(ctx context.Context) (*ClientConn, error) {
 		ID:  uuid.NewV4().String(),
 		ctx: ctx,
 		logger: logs.GetLogger().WithFields(log.Fields{
-			"server": "client_ws",
+			"server": "client_conn",
 		}),
+		Parser: &util.ByteParser{},
 	}
 	return client, nil
 }
 
-func (client *ClientConn) SetWsConn(connect *framework.HttpConnect) {
+func (client *ClientConn) SetWsConn(connect *connect.HttpConnect) {
 	connect.ClientID = client.ID
 	client.wsConn = connect
+	return
 }
 
-func (client *ClientConn) SetGameConn(connect *GameConnect) {
+func (client *ClientConn) SetGameConn(connect *connecttype.GameConnect) {
 	connect.ClientID = client.ID
 	client.gameConn = connect
+	return
 }
 
 func (client *ClientConn) SetGameID(id common.GameServerID) {
 	client.GameID = id
+	return
+}
+
+func (client *ClientConn) SetGameType(gameType gametype.GameType) {
+	client.GameType = gameType
+	return
 }
 
 func (client *ClientConn) ProtoConnect() error {
+	if client.GameType != nil {
+		client.GameType.Initialize(client.gameConn)
+	}
 	client.gameConn.ConnectGameWs()
 	return nil
+}
+
+func (client *ClientConn) IsGameConnAlive() bool {
+	if client.GameID != 0 && client.GameType != nil && client.gameConn != nil {
+		return true
+	}
+	return false
+}
+
+func (client *ClientConn) IsWsConnAlive() bool {
+	return client.wsConn != nil
 }
 
 //收clinet ws 資訊

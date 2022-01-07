@@ -8,11 +8,6 @@ import (
 	"github.com/riceChuang/gamerobot/util/config"
 )
 
-type GameLogicBase interface {
-	GetMessageBtn() map[string]*model.Message
-	HandleMessage(message *model.WSMessage)
-}
-
 func GetInstanceByContentType(gType common.GameServerID) (instance GameType) {
 
 	var cfg = model.CommonCfg{}
@@ -25,9 +20,9 @@ func GetInstanceByContentType(gType common.GameServerID) (instance GameType) {
 
 	switch gType {
 	case common.GameID_QZPN:
-		return NewFightBase(cfg, &qzpn.QZPNLogic{})
+		return NewFightBase(cfg, qzpn.NewQZPNLogic())
 	case common.GameID_BYDH:
-		return NewFightBase(cfg, &bydh.BYDHLogic{})
+		return NewFightBase(cfg, bydh.NewBYDHLogic())
 	default:
 		return nil
 	}

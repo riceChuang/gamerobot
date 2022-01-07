@@ -1,10 +1,11 @@
-package framework
+package connect
 
 import (
 	"encoding/json"
 	"fmt"
 	"github.com/riceChuang/gamerobot/common"
 	"github.com/riceChuang/gamerobot/model"
+	"github.com/riceChuang/gamerobot/util"
 	"github.com/riceChuang/gamerobot/util/logs"
 	log "github.com/sirupsen/logrus"
 	"sync"
@@ -12,18 +13,18 @@ import (
 
 // Client wrapper ws and decoder
 type HttpConnect struct {
-	conn             *Conn
-	innerHandler     sync.Map
-	lock             sync.Mutex // readwrite lock
-	logger           *log.Entry // inner Logger
-	ClientID         string
+	conn         *Conn
+	innerHandler sync.Map
+	lock         sync.Mutex // readwrite lock
+	logger       *log.Entry // inner Logger
+	ClientID     string
 }
 
 func NewHttpConnect(conn *Conn) *HttpConnect {
 	hc := &HttpConnect{
 		conn: conn,
 		logger: logs.GetLogger().WithFields(log.Fields{
-			"server": "proto_client",
+			"server": "http_connect",
 		}),
 	}
 	// nc.innerHandler = make(map[string]*msg.Handler)
@@ -38,12 +39,12 @@ func (hc *HttpConnect) Connect() error {
 }
 
 func (hc *HttpConnect) Write(msg *model.Message) {
-	sendMsg, err := json.Marshal(msg)
-	if err != nil {
-		hc.logger.Error("Marshal err:%v", err)
-		return
-	}
-	err = hc.conn.Write(sendMsg)
+	//sendMsg, err := json.Marshal(msg)
+	//if err != nil {
+	//	hc.logger.Error("Marshal err:%v", err)
+	//	return
+	//}
+	err := hc.conn.Write(msg.ToStringMessage())
 	if err != nil {
 		hc.logger.Error("資料錯誤:%v", err)
 		return
@@ -110,9 +111,9 @@ func (hc *HttpConnect) read() {
 			From:     common.Client,
 			To:       common.ClientServerTransfer,
 			ClientID: hc.ClientID,
-			Msg:     msg,
+			Msg:      msg,
 		}
-		GetClientDispatcher().AddMessage(wsMessage)
+		util.GetClientDispatcher().AddMessage(wsMessage)
 	}
 	return
 }

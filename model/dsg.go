@@ -16,3 +16,15 @@ type DSGLoginResp struct {
 	Token    string
 	UserInfo *netproto.UserLoginRet
 }
+
+type DSGStoreMoneyReq struct {
+	LoginDomain string
+	AgentID     int
+	Account     string
+	Money       int32
+}
+
+
+type DSGStoreMoneyResp struct {
+	Money int32
+}

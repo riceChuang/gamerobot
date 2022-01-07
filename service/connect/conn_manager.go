@@ -4,8 +4,9 @@ import (
 	"context"
 	"github.com/gorilla/websocket"
 	"github.com/riceChuang/gamerobot/common"
-	"github.com/riceChuang/gamerobot/framework"
+	"github.com/riceChuang/gamerobot/framework/connection/connect"
 	"github.com/riceChuang/gamerobot/model"
+	"github.com/riceChuang/gamerobot/util"
 	"github.com/riceChuang/gamerobot/util/logs"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -31,9 +32,9 @@ type ClientGameCommunicateManager struct {
 	wsSeverAddr  string
 	client       map[string]*ClientConn
 	logger       *log.Entry
-	parser       framework.Parser
+	parser       util.Parser
 	gameWSUrlMap map[string]string
-	hallWS       *framework.ProtoConnect
+	hallWS       *connect.ProtoConnect
 }
 
 func NewClientWsToGameServer(wsAddr string) *ClientGameCommunicateManager {
@@ -43,15 +44,15 @@ func NewClientWsToGameServer(wsAddr string) *ClientGameCommunicateManager {
 			wsSeverAddr: wsAddr,
 			client:      make(map[string]*ClientConn),
 			logger: logs.GetLogger().WithFields(log.Fields{
-				"server": "websocket",
+				"server": "connection_manager",
 			}),
-			parser: &framework.ByteParser{},
+			parser: &util.ByteParser{},
 		}
 
-		framework.GetClientDispatcher().AddMsgPasser(string(common.ClientServerTransfer), clientGameCommunicateManager.TransferClientMessage)
-		framework.GetClientDispatcher().AddMsgPasser(string(common.ClientSender), clientGameCommunicateManager.SendToClient)
-		framework.GetGameDispatcher().AddMsgPasser(string(common.GameServerTransfer), clientGameCommunicateManager.TransferGameMessage)
-		framework.GetGameDispatcher().AddMsgPasser(string(common.GameSender), clientGameCommunicateManager.SendToGame)
+		util.GetClientDispatcher().AddMsgPasser(string(common.ClientServerTransfer), clientGameCommunicateManager.ClientServerTransferMessage)
+		util.GetClientDispatcher().AddMsgPasser(string(common.ClientSender), clientGameCommunicateManager.ClientSender)
+		util.GetGameDispatcher().AddMsgPasser(string(common.GameServerTransfer), clientGameCommunicateManager.GameServerTransferMessage)
+		util.GetGameDispatcher().AddMsgPasser(string(common.GameSender), clientGameCommunicateManager.GameSender)
 	})
 	return clientGameCommunicateManager
 }
@@ -60,21 +61,29 @@ func GetClientGameCommunicateManager() *ClientGameCommunicateManager {
 	return clientGameCommunicateManager
 }
 
-// TransferClientMessage 轉換從client端來資料,處理後丟給遊戲
-func (c2gm *ClientGameCommunicateManager) TransferClientMessage(msg *model.WSMessage) {
+// ClientServerTransferMessage 轉換從client端來資料,處理後丟給遊戲
+func (c2gm *ClientGameCommunicateManager) ClientServerTransferMessage(msg *model.WSMessage) {
 	//轉換或處理資料
 	/*
 		1. 依照看是哪個game的資訊找尋相對應的game_factory 將訊息丟給工廠處理
 		2. 工廠若處理完畢會再送往傳送game的通道
 	*/
 	c2gm.logger.Infof("收到訊息 處理func:TransferClientMessage, from:%v, to:%v, 資訊內容:%v", msg.From, msg.To, msg.Msg.String())
-	msg.From = common.ClientServerTransfer
-	msg.To = common.GameSender
-	framework.GetGameDispatcher().AddMessage(msg)
+	client := c2gm.GetClient(msg.ClientID)
+	if client == nil {
+		return
+	}
+
+	if !client.IsGameConnAlive() {
+		c2gm.logger.Infof("gamews is not alive")
+		return
+	}
+
+	client.GameType.HandleMessage(msg)
 }
 
-// TransferGameMessage 轉換game端來的資料,處理後丟給client
-func (c2gm *ClientGameCommunicateManager) TransferGameMessage(msg *model.WSMessage) {
+// GameServerTransferMessage 轉換game端來的資料,處理後丟給client
+func (c2gm *ClientGameCommunicateManager) GameServerTransferMessage(msg *model.WSMessage) {
 	//轉換或處理資料
 	/*
 		1. 需要把拿game的資訊丟一份往client顯示
@@ -82,21 +91,32 @@ func (c2gm *ClientGameCommunicateManager) TransferGameMessage(msg *model.WSMessa
 		3. 工廠處理完訊息可能會有部分訊息網game通道送 有可能也會網client送
 	*/
 	c2gm.logger.Infof("收到訊息 處理func:TransferGameMessage, from:%v, to:%v, 資訊內容:%v", msg.From, msg.To, msg.Msg.String())
-	//client := c2gm.GetClient(msg.ClientID)
-	//gameInstance := game.GetInstanceByContentType(client.GameID)
-	//if gameInstance == nil {
-	//	c2gm.logger.Errorf("找不到game instance %v", client.GameID)
-	//}
-	//
-	//gameInstance.HandleMessage()
-
-	msg.From = common.GameServerTransfer
-	msg.To = common.ClientSender
-	framework.GetClientDispatcher().AddMessage(msg)
+	client := c2gm.GetClient(msg.ClientID)
+	if client == nil {
+		return
+	}
+	//將資料丟給game 工廠處理
+	client.GameType.HandleMessage(msg)
+	//也將資料丟給client顯示
+	msgData := *msg.Msg
+	toClientMsg := &model.WSMessage{
+		From:     common.GameServerTransfer,
+		To:       common.ClientSender,
+		ClientID: msg.ClientID,
+		Msg:      &msgData,
+	}
+	DetailData, err := client.GameType.UnmarshalMessage(&msgData)
+	if err != nil {
+		c2gm.logger.Error(err)
+		return
+	}
+	toClientMsg.Msg.Data = DetailData
+	c2gm.logger.Infof("[送送送送送], from:%v, to:%v, 資訊內容:%v", msg.From, msg.To, msg.Msg.String())
+	util.GetClientDispatcher().AddMessage(toClientMsg)
 }
 
-// SendToClient 找到client 的ws 將資料ws寫給他
-func (c2gm *ClientGameCommunicateManager) SendToClient(msg *model.WSMessage) {
+// GameSender 找到client 的ws 將資料ws寫給他
+func (c2gm *ClientGameCommunicateManager) ClientSender(msg *model.WSMessage) {
 	c2gm.logger.Infof("收到訊息 處理func:SendToClient, from:%v, to:%v, 資訊內容:%v", msg.From, msg.To, msg.Msg.String())
 	conn := c2gm.GetClient(msg.ClientID)
 	if conn == nil {
@@ -106,14 +126,21 @@ func (c2gm *ClientGameCommunicateManager) SendToClient(msg *model.WSMessage) {
 	conn.wsConn.Write(msg.Msg)
 }
 
-// SendToGame 找到game 的ws 將資料ws寫給他
-func (c2gm *ClientGameCommunicateManager) SendToGame(msg *model.WSMessage) {
+// GameSender 找到game 的ws 將資料ws寫給他
+func (c2gm *ClientGameCommunicateManager) GameSender(msg *model.WSMessage) {
 	c2gm.logger.Infof("收到訊息 處理func:SendToGame, from:%v, to:%v, 資訊內容:%v", msg.From, msg.To, msg.Msg.String())
 
-	//這邊要直接把訊息給game 但目前先繞回前端
-	msg.From = common.GameSender
-	msg.To = common.GameServerTransfer
-	framework.GetGameDispatcher().AddMessage(msg)
+	client := c2gm.GetClient(msg.ClientID)
+	if client == nil {
+		return
+	}
+
+	if !client.IsGameConnAlive() {
+		c2gm.logger.Infof("gamews is not alive")
+		return
+	}
+
+	client.gameConn.Request(client.gameConn.GameWS, msg.Msg.BClassID, msg.Msg.SClassID, msg.Msg.Data)
 }
 
 func (c2gm *ClientGameCommunicateManager) AddClient(conn *ClientConn) {
@@ -148,4 +175,3 @@ func (c2gm *ClientGameCommunicateManager) CheckTcpAlive() bool {
 	//conn.Close()
 	return true
 }
-

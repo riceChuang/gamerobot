@@ -9,7 +9,7 @@ type DsgAPIBase interface {
 	//玩家登入
 	Login(loginReq *model.DSGLoginReq) (loginResp *model.DSGLoginResp, err error)
 	//入金
-	StoreMoney(loginDomain string, agentID int, account string, money int32) (int32, error)
+	StoreMoney(storeReq *model.DSGStoreMoneyReq) (storeResp *model.DSGStoreMoneyResp, err error)
 }
 
 type AdminUseCaseBase interface {

@@ -44,6 +44,12 @@ func (msg *Message) GetName() string {
 	return fmt.Sprintf("[%v] [%v:%v]  ", msg.String(), netproto.MessageBClassID_name[msg.BClassID], BToS[msg.BClassID][msg.SClassID])
 }
 
+func (msg *Message) ToStringMessage() []byte {
+	sMsg := fmt.Sprintf("標頭:%v \n 內容:%+v", msg.String(), msg.Data)
+	return []byte(sMsg)
+}
+
+
 // Equals 消息ID是否一致
 func (msg *Message) Equals(othermsg *Message) bool {
 	return msg.BClassID == othermsg.BClassID && msg.SClassID == othermsg.SClassID

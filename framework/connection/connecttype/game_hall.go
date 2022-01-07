@@ -1,15 +1,17 @@
-package connect
+package connecttype
 
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	"github.com/riceChuang/gamerobot/framework"
+	"github.com/riceChuang/gamerobot/common"
+	"github.com/riceChuang/gamerobot/framework/connection/connect"
 	"github.com/riceChuang/gamerobot/model"
 	"github.com/riceChuang/gamerobot/using/netproto"
 	"github.com/riceChuang/gamerobot/util/logs"
 	log "github.com/sirupsen/logrus"
 	"strconv"
 	"sync"
+	"time"
 )
 
 type HallConnectInterface interface {
@@ -22,7 +24,7 @@ type HallConnect struct {
 	logger   *log.Entry
 	Account  string
 	Token    string
-	hallWS   *framework.ProtoConnect
+	hallWS   *connect.ProtoConnect
 	mu       sync.Mutex
 }
 
@@ -30,7 +32,7 @@ func NewHallConnect() HallConnectInterface {
 	return &HallConnect{
 		gameList: make(map[string]string),
 		logger: logs.GetLogger().WithFields(log.Fields{
-			"server": "GameListSvc",
+			"server": "Hall_Type_Connect",
 		}),
 	}
 }
@@ -54,8 +56,8 @@ func (gs *HallConnect) GetGameWsInfo(hallURL string, gameRoom string, account st
 func (gs *HallConnect) InitHallWs(hallURL string) {
 	gs.CleanHs()
 	//URL := fmt.Sprintf("%s:%d", gs.GameEnvCfg.ServerURL, gs.CommonCfg.HallPort)
-	conn := framework.NewConn(hallURL, nil)
-	gs.hallWS = framework.NewProtoConnect(conn)
+	conn := connect.NewConn(hallURL, nil,common.GameConnect)
+	gs.hallWS = connect.NewProtoConnect(conn)
 
 	gs.hallWS.Register(&model.Handler{
 		BClassID:  int32(netproto.MessageBClassID_Hall),
@@ -97,11 +99,11 @@ func (gs *HallConnect) onServerListRet(msg interface{}) {
 		gameIndex := fmt.Sprintf("%v-%v", gameInfo.GetGameID(), gameInfo.GetFlag())
 		gs.gameList[gameIndex] = strconv.Itoa(int(gameInfo.GetPort()))
 	}
-	//go func() {
-	//	time.Sleep(time.Second * 5)
-	//	gs.CleanHs()
-	//	return
-	//}()
+	go func() {
+		time.Sleep(time.Second * 5)
+		gs.CleanHs()
+		return
+	}()
 	return
 }
 
@@ -153,7 +155,7 @@ func (gs *HallConnect) RequestServerListInfo() {
 }
 
 // Request send and handle protoMsg Error
-func (gs *HallConnect) Request(ws *framework.ProtoConnect, bclsID int32, sclsID int32, protoData interface{}) {
+func (gs *HallConnect) Request(ws *connect.ProtoConnect, bclsID int32, sclsID int32, protoData interface{}) {
 	message, err := model.NewProto(bclsID, sclsID, protoData)
 
 	// should kill robot

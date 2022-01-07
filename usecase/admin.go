@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	"github.com/riceChuang/gamerobot/service/connect"
+	"github.com/riceChuang/gamerobot/framework/connection/connecttype"
 	"github.com/riceChuang/gamerobot/using/netproto"
 	"sync"
 	"time"
@@ -22,7 +22,7 @@ func NewAdminService() AdminUseCaseBase {
 
 func (as *AdminService) GetGameWsInfo(hallURL string, gameRoom string, account string, token string) (url string, userinfo *netproto.UserLoginRet) {
 	var wg sync.WaitGroup
-	hallConnect := connect.NewHallConnect()
+	hallConnect := connecttype.NewHallConnect()
 	url, userinfo = hallConnect.GetGameWsInfo(hallURL, gameRoom, account, token)
 	if url != "" && userinfo != nil {
 		return

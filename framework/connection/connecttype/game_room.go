@@ -1,11 +1,11 @@
-package connect
+package connecttype
 
 import (
 	"github.com/riceChuang/gamerobot/common"
-	"github.com/riceChuang/gamerobot/framework"
-	"github.com/riceChuang/gamerobot/framework/gametype"
+	"github.com/riceChuang/gamerobot/framework/connection/connect"
 	"github.com/riceChuang/gamerobot/model"
 	"github.com/riceChuang/gamerobot/using/netproto"
+	"github.com/riceChuang/gamerobot/util"
 	"github.com/riceChuang/gamerobot/util/logs"
 	log "github.com/sirupsen/logrus"
 	"sync"
@@ -15,23 +15,26 @@ type GameConnectInterface interface {
 }
 
 type GameConnect struct {
-	ClientID string
-	logger   *log.Entry
-	GameWS   *framework.ProtoConnect
-	mu       sync.Mutex
-	userInfo *netproto.UserLoginRet
-	gameType *gametype.GameType
+	ClientID  string
+	logger    *log.Entry
+	GameWS    *connect.ProtoConnect
+	mu        sync.Mutex
+	userInfo  *netproto.UserLoginRet
+	UserMoney int32
 }
 
-func NewGameConnect(gameWS *framework.ProtoConnect, uinfo *netproto.UserLoginRet) *GameConnect {
-	return &GameConnect{
+func NewGameConnect(gameWS *connect.ProtoConnect, uinfo *netproto.UserLoginRet) *GameConnect {
+	gc := &GameConnect{
 		GameWS: gameWS,
 		logger: logs.GetLogger().WithFields(log.Fields{
-			"server": "GameConnect",
+			"server": "Game_Type_Connect",
 		}),
 		userInfo: uinfo,
-		//gameType:
 	}
+	if uinfo != nil {
+		gc.UserMoney = int32(uinfo.GetUserData().GetCashAmount() / int64(100))
+	}
+	return gc
 }
 
 // InitGameWs ...
@@ -44,7 +47,7 @@ func (gc *GameConnect) ConnectGameWs() {
 	})
 
 	gc.GameWS.Register(&model.Handler{
-		BClassID:  int32(netproto.MessageBClassID_GameRoom),
+		BClassID:  int32(netproto.MessageBClassID_Game),
 		SClassID:  0,
 		OnMessage: gc.onGameMessage,
 	})
@@ -53,9 +56,36 @@ func (gc *GameConnect) ConnectGameWs() {
 	gc.requestLoginGame()
 }
 
+// Request send and handle protoMsg Error
+func (gc *GameConnect) Request(ws *connect.ProtoConnect, bclsID int32, sclsID int32, protoData interface{}) {
+	message, err := model.NewProto(bclsID, sclsID, protoData)
+
+	// should kill robot
+	if err != nil {
+		gc.logger.Panic(err.Error())
+	}
+	ws.Write(message)
+}
+
+// CleanGs ...
+func (gc *GameConnect) CleanGs() {
+	gc.logger.Info("[DEBUG][Manager][CleanGs] ----")
+	if gc.GameWS != nil {
+		gc.GameWS.Clean()
+		gc.GameWS = nil
+	}
+}
+
+func (gc *GameConnect) GetUserID() int32 {
+	if gc.userInfo != nil {
+		return gc.userInfo.GetUserID()
+	}
+	return 0
+}
+
 //request GameWs
 func (gc *GameConnect) requestLoginGame() {
-	gc.logger.Infof("[AAAAAAAAAAAArequestLoginGame] 請求登入遊戲")
+	gc.logger.Infof("[requestLoginGame] 請求登入遊戲")
 	gc.Request(
 		gc.GameWS,
 		int32(netproto.MessageBClassID_GameRoom),
@@ -88,27 +118,7 @@ func (gc *GameConnect) onGameMessage(msg interface{}) {
 		From:     common.Game,
 		To:       common.GameServerTransfer,
 		ClientID: gc.ClientID,
-		Msg:     message,
+		Msg:      message,
 	}
-	framework.GetGameDispatcher().AddMessage(wsMessage)
-}
-
-// Request send and handle protoMsg Error
-func (gc *GameConnect) Request(ws *framework.ProtoConnect, bclsID int32, sclsID int32, protoData interface{}) {
-	message, err := model.NewProto(bclsID, sclsID, protoData)
-
-	// should kill robot
-	if err != nil {
-		gc.logger.Panic(err.Error())
-	}
-	ws.Write(message)
-}
-
-// CleanGs ...
-func (gc *GameConnect) CleanGs() {
-	gc.logger.Info("[DEBUG][Manager][CleanGs] ----")
-	if gc.GameWS != nil {
-		gc.GameWS.Clean()
-		gc.GameWS = nil
-	}
+	util.GetGameDispatcher().AddMessage(wsMessage)
 }

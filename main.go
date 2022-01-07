@@ -4,9 +4,9 @@ import (
 	"context"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/riceChuang/gamerobot/framework"
 	"github.com/riceChuang/gamerobot/handler"
 	"github.com/riceChuang/gamerobot/service/connect"
+	"github.com/riceChuang/gamerobot/util"
 	"github.com/riceChuang/gamerobot/util/config"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -41,7 +41,7 @@ func main() {
 
 	handler.Router(r)
 	//初始化內部服務通道
-	framework.InitDispatcher()
+	util.InitDispatcher()
 
 	srv := &http.Server{
 		Addr:    ":8080",

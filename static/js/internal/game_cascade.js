@@ -101,7 +101,7 @@ function loginRequest() {
     }).then(function (resp){
         if (resp.status == 200){
             resp.json().then(data => {
-                console.log(data.data)
+                console.log(data)
                 connectWS(data.data)
             })
         }
@@ -111,10 +111,17 @@ function loginRequest() {
 function  connectWS(data) {
     var wsuri ="ws://127.0.0.1:8080/ws"; //這裏的IP假設是局域測試的話。須要換成自己的
 
+    var accountID = document.getElementById(`right-account`);
+    accountID.innerText = data.account
+    var evnID = document.getElementById(`right-env`);
+    evnID.innerText = data.env
+    var gameID = document.getElementById(`right-game`);
+    gameID.innerText = data.gamename
+
     sock = new socket({
         //網址（端口是我下面的服務器的端口）
         'url': wsuri ,
-        'urlParam': "connID=" + data,
+        'urlParam': "connID=" + data.conn,
     })
 
     console.log(sock)
@@ -151,7 +158,7 @@ function  connectWS(data) {
         root.appendChild(msggg)
         root.appendChild(time)
         div.appendChild(root)
-
+        div.scrollTop = div.scrollHeight;
     })
     //心跳事件
     sock.onreconnect(()=>{

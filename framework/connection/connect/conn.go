@@ -1,12 +1,13 @@
-package framework
+package connect
 
 import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
-	log "github.com/sirupsen/logrus"
+	"github.com/riceChuang/gamerobot/common"
 	"github.com/riceChuang/gamerobot/util"
 	"github.com/riceChuang/gamerobot/util/logs"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"sync"
 )
@@ -19,16 +20,18 @@ type Conn struct {
 	lock      sync.Mutex      // readwrite lock
 	logger    *log.Entry      // inner Logger
 	wsType    int
+	connType  common.ConnectType
 }
 
 // NewConn new a ws Conn
-func NewConn(URL string, conn *websocket.Conn) *Conn {
+func NewConn(URL string, conn *websocket.Conn, connectType common.ConnectType) *Conn {
 	c := &Conn{
 		URL: URL,
 		logger: logs.GetLogger().WithFields(log.Fields{
-			"server": "client_conn",
+			"server": "conn",
 		}),
 		wsType: websocket.TextMessage,
+		connType: connectType,
 	}
 	if conn != nil {
 		c.Conn = conn
@@ -75,9 +78,12 @@ func (ws *Conn) Write(bytes []byte) error {
 	ws.lock.Lock()
 	defer ws.lock.Unlock()
 	if ws.IsConnect {
-		length := util.IntToBytes(int32(len(bytes)), true)
+		var lenght = []byte{}
+		if ws.connType == common.GameConnect {
+			lenght = util.IntToBytes(int32(len(bytes)), true)
+		}
 		// fmt.Println("send ..... ", length, append(length, bytes...))
-		ws.Conn.WriteMessage(ws.wsType, append(length, bytes...))
+		ws.Conn.WriteMessage(ws.wsType, append(lenght, bytes...))
 	} else {
 		return errors.New("socket Write Error: You need to Connect first")
 	}

@@ -1,4 +1,4 @@
-package framework
+package connect
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ import (
 // Client wrapper ws and decoder
 type ProtoConnect struct {
 	conn            *Conn
-	Parser          Parser
+	Parser          util.Parser
 	evtChan         *model.EventChan
 	innerHandler    sync.Map
 	onCloseDelegate func() // if socket dead by read / dispatch / write error, please take error from here
@@ -30,9 +30,9 @@ func NewProtoConnect(conn *Conn) *ProtoConnect {
 	pc := &ProtoConnect{
 		conn: conn,
 		logger: logs.GetLogger().WithFields(log.Fields{
-			"server": "proto_client",
+			"server": "proto_connect",
 		}),
-		Parser: &model.ByteParser{},
+		Parser: &util.ByteParser{},
 	}
 	// pc.innerHandler = make(map[string]*msg.Handler)
 	pc.innerHandler = sync.Map{}
@@ -255,6 +255,7 @@ ForWrite:
 }
 
 func (pc *ProtoConnect) dispatch(m *model.Message) {
+	pc.logger.Infof("dispatch Message :%v", m.GetName())
 	if data, ok := pc.innerHandler.Load(fmt.Sprintf("%d:0", m.BClassID)); ok {
 		if innerData, k := pc.innerHandler.Load(m.String()); k {
 			h := innerData.(*model.Handler)
@@ -275,7 +276,7 @@ func (pc *ProtoConnect) dispatch(m *model.Message) {
 }
 
 func (pc *ProtoConnect) sendMessage(m *model.Message, h *model.Handler) {
-	pc.logger.Println("dispatch message", m.GetName())
+	pc.logger.Info("dispatch message", m.GetName())
 	if h.MsgType != nil {
 		if err := proto.Unmarshal(m.Data.([]byte), h.MsgType); err != nil {
 			pc.logger.Println("client proto unmarshal error: ", err.Error(), fmt.Sprintf("%+v", m.Data))

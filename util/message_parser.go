@@ -1,9 +1,8 @@
-package framework
+package util
 
 import (
 	"errors"
 	"github.com/riceChuang/gamerobot/model"
-	"github.com/riceChuang/gamerobot/util"
 )
 
 // Parser ...
@@ -18,8 +17,8 @@ type ByteParser struct {
 
 // Marshal convert Message to bytes
 func (bmp *ByteParser) Marshal(msg *model.Message) ([]byte, error) {
-	b1 := util.IntToBytes(int32(msg.BClassID), true)
-	b2 := util.IntToBytes(int32(msg.SClassID), true)
+	b1 := IntToBytes(int32(msg.BClassID), true)
+	b2 := IntToBytes(int32(msg.SClassID), true)
 
 	b3, ok := msg.Data.([]byte)
 
@@ -33,9 +32,9 @@ func (bmp *ByteParser) Marshal(msg *model.Message) ([]byte, error) {
 // UnMarshal convert bytes to Message
 func (bmp *ByteParser) UnMarshal(data []byte) (*model.Message, error) {
 	msg := new(model.Message)
-	length := util.BytesToInt(data[:4], true)
-	msg.BClassID = util.BytesToInt(data[4:8], true)
-	msg.SClassID = util.BytesToInt(data[8:12], true)
+	length := BytesToInt(data[:4], true)
+	msg.BClassID = BytesToInt(data[4:8], true)
+	msg.SClassID = BytesToInt(data[8:12], true)
 
 	msg.Data = data[12 : length+4]
 

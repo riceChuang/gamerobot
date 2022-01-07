@@ -5,8 +5,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/riceChuang/gamerobot/common"
-	"github.com/riceChuang/gamerobot/framework"
-	"github.com/riceChuang/gamerobot/framework/gametype"
+	connection "github.com/riceChuang/gamerobot/framework/connection/connect"
+	"github.com/riceChuang/gamerobot/framework/connection/connecttype"
+	"github.com/riceChuang/gamerobot/game/gametype"
 	"github.com/riceChuang/gamerobot/model"
 	"github.com/riceChuang/gamerobot/service/connect"
 	"github.com/riceChuang/gamerobot/usecase"
@@ -41,7 +42,7 @@ func (h *UserController) GetIndex(ctx *gin.Context) {
 		Envs:     []string{},
 	}
 	//取得遊戲列表
-	for _ , game := range h.Config.GameList {
+	for _, game := range h.Config.GameList {
 		instance := gametype.GetInstanceByContentType(common.GameServerID(game.GameID))
 		if instance == nil {
 			continue
@@ -100,6 +101,7 @@ func (h *UserController) UserLogin(ctx *gin.Context) {
 		ctx.Error(model.ErrInvalidRequest)
 		return
 	}
+
 	gameInstance := gametype.GetInstanceByContentType(common.GameServerID(request.GameID))
 	gConfig := gameInstance.GetGameConfig()
 	var gameRoom string
@@ -145,7 +147,7 @@ func (h *UserController) UserLogin(ctx *gin.Context) {
 
 	//取得遊戲port號後 新增game connect
 	gameURL := fmt.Sprintf("%s:%s", envInfo.ServerURL, gamePort)
-	gameConnect := connect.NewGameConnect(framework.NewProtoConnect(framework.NewConn(gameURL, nil)), userInfo)
+	gameConnect := connecttype.NewGameConnect(connection.NewProtoConnect(connection.NewConn(gameURL, nil, common.GameConnect)), userInfo)
 
 	//新增client conn
 	conn, err := connect.NewClientWsGameConn(ctx)
@@ -154,6 +156,7 @@ func (h *UserController) UserLogin(ctx *gin.Context) {
 		return
 	}
 	conn.SetGameConn(gameConnect)
+	conn.SetGameType(gameInstance)
 	conn.SetGameID(common.GameServerID(request.GameID))
 
 	//將client conn 加入到manager中
@@ -163,7 +166,12 @@ func (h *UserController) UserLogin(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, model.Resp{
 		Code:    http.StatusOK,
 		Message: "success",
-		Data:    conn.ID,
+		Data: model.LoginRespData{
+			ConnID:   conn.ID,
+			Account:  request.UserName,
+			Env:      request.Env,
+			GameName: fmt.Sprintf("%v-%v", gameInstance.GetGameConfig().GameName, request.RoomType),
+		},
 	})
 	return
 }
@@ -195,8 +203,8 @@ func (h *UserController) WebSocketConn(ctx *gin.Context) {
 	if err != nil {
 		return
 	}
-	connection := framework.NewConn("", ws)
-	wsConnection := framework.NewHttpConnect(connection)
+	httpConnect := connection.NewConn("", ws, common.HttpConnect)
+	wsConnection := connection.NewHttpConnect(httpConnect)
 	conn.SetWsConn(wsConnection)
 
 	err = wsConnection.Connect()
