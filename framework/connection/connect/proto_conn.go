@@ -2,11 +2,11 @@ package connect
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"github.com/riceChuang/gamerobot/model"
 	"github.com/riceChuang/gamerobot/using/netproto"
 	"github.com/riceChuang/gamerobot/util"
 	"github.com/riceChuang/gamerobot/util/logs"
-	log "github.com/sirupsen/logrus"
 	"sync"
 	"time"
 
@@ -37,12 +37,18 @@ func NewProtoConnect(conn *Conn) *ProtoConnect {
 	// pc.innerHandler = make(map[string]*msg.Handler)
 	pc.innerHandler = sync.Map{}
 	pc.evtChan = &model.EventChan{
-		ReadSig:  make(chan *model.Message, 2048),
-		WriteSig: make(chan *model.Message, 2048),
-		ErrSig:   make(chan error),
-		StopSig:  make(chan bool, 1),
+		ReadSig:       make(chan *model.Message, 2048),
+		WriteSig:      make(chan *model.Message, 2048),
+		ErrSig:        make(chan error),
+		StopHandleSig: make(chan bool, 1),
+		StopWriteSig:  make(chan bool, 1),
+		StopReadSig:   make(chan bool, 1),
 	}
 	return pc
+}
+
+func (pc *ProtoConnect) GetURL() string {
+	return pc.conn.URL
 }
 
 // Connect ...
@@ -65,7 +71,9 @@ func (pc *ProtoConnect) Write(msg *model.Message) {
 
 // Close ...
 func (pc *ProtoConnect) Close() error {
-	pc.evtChan.StopSig <- true
+	pc.evtChan.StopReadSig <- true
+	pc.evtChan.StopWriteSig <- true
+	pc.evtChan.StopHandleSig <- true
 	if err := pc.conn.Close(); err != nil {
 		return err
 	}
@@ -82,7 +90,6 @@ func (pc *ProtoConnect) Clean() {
 		pc.innerHandler.Delete(key)
 		return true
 	})
-	pc.conn = nil
 }
 
 // Register Handler ...
@@ -165,54 +172,59 @@ func (pc *ProtoConnect) sendHeartBeat() {
 func (pc *ProtoConnect) read() {
 ForRead:
 	for {
-		data, err := pc.conn.Read()
-		if err != nil {
-			pc.evtChan.ErrSig <- err
+		select {
+		case <-pc.evtChan.StopReadSig:
+			pc.logger.Info("[protoConnect] 關掉讀取go func")
 			break ForRead
-		}
-
-		var tempBytes []byte
-		if pc.unHandleBytes != nil {
-			tempBytes = append(pc.unHandleBytes, data...)
-			pc.unHandleBytes = nil
-		} else {
-			tempBytes = data
-		}
-
-		for len(tempBytes) >= 4 {
-			// Force drop wired package
-			length := util.BytesToInt(tempBytes[:4], true)
-			// if int(length+4) > 10000 {
-			// 	pc.iLog.Println("[DEUBG]強迫drop 異常包", int(length+4), len(tempBytes))
-			// 	pc.unHandleBytes = nil
-			// 	tempBytes = nil
-			// 	continue
-			// }
-
-			if int(length+4) > len(tempBytes) {
-				pc.unHandleBytes = tempBytes
-				tempBytes = nil
-				continue
-			}
-
-			message, err := pc.Parser.UnMarshal(tempBytes[:length+4])
+		default:
+			data, err := pc.conn.Read()
 			if err != nil {
 				pc.evtChan.ErrSig <- err
 				break ForRead
 			}
-			pc.evtChan.ReadSig <- message
 
-			if int(length+4) == len(tempBytes) {
-				tempBytes = nil
+			var tempBytes []byte
+			if pc.unHandleBytes != nil {
+				tempBytes = append(pc.unHandleBytes, data...)
+				pc.unHandleBytes = nil
 			} else {
-				tempBytes = tempBytes[length+4:]
+				tempBytes = data
+			}
+
+			for len(tempBytes) >= 4 {
+				// Force drop wired package
+				length := util.BytesToInt(tempBytes[:4], true)
+				// if int(length+4) > 10000 {
+				// 	pc.iLog.Println("[DEUBG]強迫drop 異常包", int(length+4), len(tempBytes))
+				// 	pc.unHandleBytes = nil
+				// 	tempBytes = nil
+				// 	continue
+				// }
+
+				if int(length+4) > len(tempBytes) {
+					pc.unHandleBytes = tempBytes
+					tempBytes = nil
+					continue
+				}
+
+				message, err := pc.Parser.UnMarshal(tempBytes[:length+4])
+				if err != nil {
+					pc.evtChan.ErrSig <- err
+					break ForRead
+				}
+				pc.evtChan.ReadSig <- message
+
+				if int(length+4) == len(tempBytes) {
+					tempBytes = nil
+				} else {
+					tempBytes = tempBytes[length+4:]
+				}
+			}
+			if len(tempBytes) != 0 && len(tempBytes) < 4 {
+				pc.unHandleBytes = tempBytes
 			}
 		}
-		if len(tempBytes) != 0 && len(tempBytes) < 4 {
-			pc.unHandleBytes = tempBytes
-		}
 	}
-
 	pc.logger.Println("[ERROR]  SOCKET READ BREAK ")
 }
 
@@ -224,7 +236,8 @@ ForHandle:
 			pc.onClose(err)
 		case message := <-pc.evtChan.ReadSig:
 			pc.dispatch(message)
-		case <-pc.evtChan.StopSig:
+		case <-pc.evtChan.StopHandleSig:
+			pc.logger.Info("[protoConnect] 關掉Hand go func")
 			break ForHandle
 		}
 	}
@@ -248,14 +261,15 @@ ForWrite:
 				pc.evtChan.ErrSig <- err
 				break ForWrite
 			}
-		case <-pc.evtChan.StopSig:
+		case <-pc.evtChan.StopWriteSig:
+			pc.logger.Info("[protoConnect] 關掉write go func")
 			break ForWrite
 		}
 	}
 }
 
 func (pc *ProtoConnect) dispatch(m *model.Message) {
-	pc.logger.Infof("dispatch Message :%v", m.GetName())
+	pc.logger.Infof("dispatch Message :%v, data:%v", m.GetName())
 	if data, ok := pc.innerHandler.Load(fmt.Sprintf("%d:0", m.BClassID)); ok {
 		if innerData, k := pc.innerHandler.Load(m.String()); k {
 			h := innerData.(*model.Handler)
@@ -292,10 +306,10 @@ func (pc *ProtoConnect) sendMessage(m *model.Message, h *model.Handler) {
 
 // onClose
 func (pc *ProtoConnect) onClose(err error) {
-	// log.Printf("[DEBUG][onCLOSE] ---- onClose %v", err)
+	log.Printf("[DEBUG][onCLOSE] ---- onClose %v", err)
 	if pc.conn != nil {
 		if err != nil {
-			pc.logger.Panic("Client Close By err", err.Error())
+			pc.logger.Errorf("Client Close By err:%v", err.Error())
 		}
 		if pc.onCloseDelegate != nil {
 			pc.onCloseDelegate()

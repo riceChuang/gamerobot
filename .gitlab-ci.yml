@@ -1,0 +1,75 @@
+image: docker/compose:latest
+
+variables:
+  DOCKERFILE_PATH: ./docker
+  DOCKER_REGISTRY_ACCOUNT: ssp
+  DOCKER_REGISTRY_PASSWORD: Gbe7YCsp2z77cCaR6nc3yebhQhn7hf2B
+  DOCKER_REGISTRY: registry-office.zzishare.com
+  DOCKER_BRANCH_TAG: $CI_COMMIT_REF_NAME
+
+default:
+  before_script:
+    - docker login -u "$DOCKER_REGISTRY_ACCOUNT" -p "$DOCKER_REGISTRY_PASSWORD" $DOCKER_REGISTRY
+stages:
+  - ci_base
+  - buildtools
+  - deploy
+
+build_gobuildbase_image:
+  tags:
+    - golang  # docker env only runner12
+  stage: ci_base
+  script:
+    - docker build -f buildtools/Dockerfile_base.dev -t registry-office.zzishare.com/ssp/robotbase:latest .
+    - docker push registry-office.zzishare.com/ssp/robotbase:latest
+  only:
+    refs: ['develop', 'feature-merge', 'master']
+
+
+build_gamerobot_image:
+  tags:
+    - golang  # docker env only runner12
+  stage: buildtools
+  script:
+    - docker-compose build gamerobot
+  only:
+    refs: ['develop', 'feature-merge', 'master']
+
+
+deploy_image:
+  tags:
+    - golang
+  stage: deploy
+  only:
+    refs: ['develop', 'feature-merge', 'master']
+  except:
+    - tags
+  before_script:
+    - docker login -u "$DOCKER_REGISTRY_ACCOUNT" -p "$DOCKER_REGISTRY_PASSWORD" $DOCKER_REGISTRY
+  script:
+    - echo "$DOCKER_BRANCH_TAG"
+    - echo "$CI_COMMIT_BRANCH"
+    - docker push $DOCKER_REGISTRY/ssp/gamerobot:$CI_COMMIT_BRANCH
+
+  after_script:
+    - docker-compose down
+    - docker image prune -f
+    - docker rm $(docker ps -aq)
+    - docker rmi $(docker images -qf "dangling=true")
+
+
+publish:
+  tags:
+    - golang
+  stage: deploy
+  only:
+    - tags
+  before_script:
+    - docker login -u "$DOCKER_REGISTRY_ACCOUNT" -p "$DOCKER_REGISTRY_PASSWORD" $DOCKER_REGISTRY
+    - docker pull $DOCKER_REGISTRY/ssp/gamerobot:master
+  script:
+    - echo "git tag $CI_COMMIT_TAG"
+    - echo "git brench $CI_COMMIT_BRANCH"
+    - docker tag $DOCKER_REGISTRY/ssp/gamerobot:master $DOCKER_REGISTRY/ssp/gamerobot:$CI_COMMIT_TAG
+    - docker push $DOCKER_REGISTRY/ssp/gamerobot:$CI_COMMIT_TAG
+

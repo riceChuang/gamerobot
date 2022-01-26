@@ -23,5 +23,5 @@ func (qzpn *QZPNLogic) hiThree(data interface{}) {
 	msg.From = common.Game
 	msg.To = common.ClientSender
 	msg.Msg.Data = "我收到了訊息但我沒傳給遊戲"
-	util.GetGameDispatcher().AddMessage(msg)
+	util.GetClientDispatcher().AddMessage(msg)
 }

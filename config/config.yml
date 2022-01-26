@@ -1,7 +1,8 @@
-bindport: ":12345"
+bindport: ":8888"
 loglevel: "debug"
-account: jason1111
-password: jason1111
+account: test_gamerobot_0001
+password: test_gamerobot_0001
+domain: "ws://127.0.0.1:8888"
 environment:
   - env: "DEV"
     serverUrl: "ws://103.103.81.3"

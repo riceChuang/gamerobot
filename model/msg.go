@@ -6,15 +6,17 @@ type WSMessage struct {
 	From     common.PasserType
 	To       common.PasserType
 	ClientID string
-	Msg     *Message
+	Msg      *Message
 }
 
 // eventChan ...
 type EventChan struct {
-	ReadSig  chan *Message
-	WriteSig chan *Message
-	ErrSig   chan error
-	StopSig  chan bool
+	ReadSig       chan *Message
+	WriteSig      chan *Message
+	ErrSig        chan error
+	StopHandleSig chan bool
+	StopWriteSig  chan bool
+	StopReadSig   chan bool
 }
 
 // ConnClient ...

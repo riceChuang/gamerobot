@@ -1,17 +1,17 @@
-{{ define "views/index.html"}}
+{{ define "views/robot_test.html"}}
 <!--Embed the header.html template at this location-->
 {{ template "layouts/header.html" .}}
-<script src="js/window.js"></script>
 <div class="container">
     <div class="row">
         <!--Embed the leftside_game.html template at this location-->
-        {{ template "homepage/leftside_game.html" .}}
+        {{ template "homepage/leftside_stress.html" .}}
 
         <div id="list" class="anyClass col-12 col-md-8">
         </div>
 
         <!--Embed the rightside_game.html template at this location-->
-        {{ template "homepage/rightside_game.html" .}}
+        {{ template "homepage/rightside_stress_info.html" .}}
+
 
     </div>
 </div>

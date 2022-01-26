@@ -1,0 +1,18 @@
+bindport: ":8888"
+loglevel: "info"
+account: test_gamerobot_0001
+password: test_gamerobot_0001
+domain: "ssp-bot.zzishare.com"
+environment:
+  - env: "DEV"
+    serverUrl: "ws://10.1.7.33"
+    loginDomain: "10.1.7.33"
+    agentID: 2
+  - env: "RTP"
+    serverUrl: "ws://10.1.7.36"
+    loginDomain: "10.1.7.36"
+    agentID: 1
+  - env: "FEATURE"
+    serverUrl: "ws://10.1.7.21"
+    loginDomain: "10.1.7.21"
+    agentID: 3

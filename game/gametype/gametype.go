@@ -3,12 +3,12 @@ package gametype
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	log "github.com/sirupsen/logrus"
 	"github.com/riceChuang/gamerobot/common"
 	"github.com/riceChuang/gamerobot/framework/connection/connecttype"
 	"github.com/riceChuang/gamerobot/framework/gamehandler"
 	"github.com/riceChuang/gamerobot/model"
 	"github.com/riceChuang/gamerobot/util/logs"
-	log "github.com/sirupsen/logrus"
 	"sort"
 )
 

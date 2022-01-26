@@ -1,9 +1,6 @@
 import * as common from "../common/index.js";
 import {socket} from "./websocket.js";
 
-window.post = function(url, data) {
-    return fetch(url, {method: "POST", headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
-}
 
 var sock= null;
 
@@ -103,13 +100,17 @@ function loginRequest() {
             resp.json().then(data => {
                 console.log(data)
                 connectWS(data.data)
+                common.addSuccess()
+            })
+        }else {
+            resp.json().then(data => {
+                common.addFail(JSON.stringify(data))
             })
         }
     })
 }
 
 function  connectWS(data) {
-    var wsuri ="ws://127.0.0.1:8080/ws"; //這裏的IP假設是局域測試的話。須要換成自己的
 
     var accountID = document.getElementById(`right-account`);
     accountID.innerText = data.account
@@ -120,7 +121,7 @@ function  connectWS(data) {
 
     sock = new socket({
         //網址（端口是我下面的服務器的端口）
-        'url': wsuri ,
+        'url': common.router.wsUrl ,
         'urlParam': "connID=" + data.conn,
     })
 

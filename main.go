@@ -4,11 +4,11 @@ import (
 	"context"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 	"github.com/riceChuang/gamerobot/handler"
 	"github.com/riceChuang/gamerobot/service/connect"
 	"github.com/riceChuang/gamerobot/util"
 	"github.com/riceChuang/gamerobot/util/config"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,9 +18,10 @@ import (
 
 func main() {
 	cfg := config.LoadConfig()
+	_ = config.LoadGameConfig()
 	logLevel, err := log.ParseLevel(cfg.LogLevel)
 	if err != nil {
-		log.Warnf("log level invalid, set log to info level, configs data:%s", "debug")
+		log.Warnf("log level invalid, set log to info level, config data:%s", "debug")
 		logLevel = log.InfoLevel
 	}
 	log.SetLevel(logLevel)
@@ -44,16 +45,16 @@ func main() {
 	util.InitDispatcher()
 
 	srv := &http.Server{
-		Addr:    ":8080",
+		Addr:    cfg.BindPort,
 		Handler: r,
 	}
 
 	//初始化connManager
-	connect.NewClientWsToGameServer(":8080")
+	connect.NewClientWsToGameServer(cfg.BindPort)
 
 	go func() {
 		// service connections
-		log.Info("Started")
+		log.Infof("Started port:%v", cfg.BindPort)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("listen: %s\n", err)
 		}

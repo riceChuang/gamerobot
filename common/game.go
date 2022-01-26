@@ -26,8 +26,32 @@ const (
 )
 
 var (
+	GameServerID_EngName = map[GameServerID]string{
+		GameID_QZNN:   "QZNN",
+		GameID_ZJH:    "SCZJH",
+		GameID_TBNN:   "TBNN",
+		GameID_SG:     "SG",
+		GameID_SSS:    "SSS",
+		GameID_LHD:    "LHD",
+		GameID_BJL:    "BJL",
+		GameID_BRNN:   "BRNN",
+		GameID_HHDZ:   "HHDZ",
+		GameID_CD21:   "CD21",
+		GameID_WRJH:   "WRJH",
+		GameID_BAR28:  "BAR28",
+		GameID_QZPN:   "QZPN",
+		GameID_CPQN:   "CPQN",
+		GameID_CPQN4:  "CPQN4",
+		GameID_IDAZJH: "IDAZJH",
+		GameID_BCBM:   "BCBM",
+		GameID_FQZS:   "FQZS",
+		GameID_FP:     "FP",
+		GameID_BYDH:   "BYDH",
+	}
+
+	// GameIDtoName ...
 	GameServerID_Name = map[GameServerID]string{
-		GameID_QZNN:   "搶莊牛牛",
+		GameID_QZNN:   "搶裝牛牛",
 		GameID_ZJH:    "喜錢炸金花",
 		GameID_TBNN:   "通比牛牛",
 		GameID_SG:     "三公",
@@ -48,6 +72,29 @@ var (
 		GameID_FP:     "森林舞會",
 		GameID_BYDH:   "捕魚大亨",
 	}
+	// GameNameToID ...
+	GameNameToID = map[string]int{
+		"QZNN":    2,
+		"TBNN":    7,
+		"SG":      8,
+		"SSS":     10,
+		"LHD":     11,
+		"BJL":     13,
+		"ERMJ":    17,
+		"BRNN":    19,
+		"HHDZ":    20,
+		"CD21":    22,
+		"WRJH":    28,
+		"ERG":     29,
+		"PG":      30,
+		"KPQZNN":  31,
+		"K4PQZNN": 32,
+		"FP":      36,
+		"RU":      37,
+		"BYDH":    38,
+		"DTNN":    39,
+	}
+
 )
 
 func GameServerIDToString(id GameServerID) string {

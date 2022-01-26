@@ -6,10 +6,11 @@ import (
 )
 
 type GameInfo struct {
-	GameID   int32
-	Name     string
-	RoomType []string
-	Buttons  map[string]*Message
+	GameID       int32
+	Name         string
+	RoomType     []string
+	Buttons      map[string]*Message
+	RoomStrategy map[string]map[string]interface{}
 }
 
 type GameMessageInfo struct {

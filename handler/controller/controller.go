@@ -1,12 +1,14 @@
 package controller
 
 type Controller struct {
-	User *UserController
+	User   *UserController
+	Stress *StressController
 }
 
 // All Controller
 func NewController() *Controller {
 	return &Controller{
-		User: NewUserController(),
+		User:   NewUserController(),
+		Stress: NewStressController(),
 	}
 }

@@ -25,3 +25,7 @@ const (
 	HttpConnect ConnectType = 1
 	GameConnect ConnectType = 2
 )
+
+const (
+	WSClose = 99
+)

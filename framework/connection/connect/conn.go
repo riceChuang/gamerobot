@@ -4,12 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
+	log "github.com/sirupsen/logrus"
 	"github.com/riceChuang/gamerobot/common"
 	"github.com/riceChuang/gamerobot/util"
 	"github.com/riceChuang/gamerobot/util/logs"
-	log "github.com/sirupsen/logrus"
 	"io"
+	"net/http"
 	"sync"
+	"time"
 )
 
 // Conn handle read and write, also connection
@@ -30,7 +32,7 @@ func NewConn(URL string, conn *websocket.Conn, connectType common.ConnectType) *
 		logger: logs.GetLogger().WithFields(log.Fields{
 			"server": "conn",
 		}),
-		wsType: websocket.TextMessage,
+		wsType:   websocket.TextMessage,
 		connType: connectType,
 	}
 	if conn != nil {
@@ -45,7 +47,12 @@ func (ws *Conn) Connect() error {
 	ws.lock.Lock()
 	defer ws.lock.Unlock()
 	if !ws.IsConnect {
-		conn, _, err := websocket.DefaultDialer.Dial(ws.URL, nil)
+		ws.Conn = nil
+		dialer := &websocket.Dialer{
+			Proxy:            http.ProxyFromEnvironment,
+			HandshakeTimeout: 45 * time.Second,
+		}
+		conn, _, err := dialer.Dial(ws.URL, nil)
 		if err != nil {
 			return fmt.Errorf("socket dial error: %s", err.Error())
 		}
@@ -100,7 +107,6 @@ func (ws *Conn) Close() error {
 			return fmt.Errorf("socket Close Error: %s", err.Error())
 		}
 		ws.IsConnect = false
-		ws.Conn = nil
 	} else {
 		return errors.New("socket already closed")
 	}

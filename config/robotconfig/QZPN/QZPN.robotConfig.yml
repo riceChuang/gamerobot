@@ -1,0 +1,51 @@
+"name": "config1"
+"rooms":
+  -
+    "roomIndex": 1
+    "robotNumber": 50
+    "minMoney": 40
+    "storedMoney": 40
+    "robotName": "qzpn_robot1"
+    "strategy":
+      "betodd": "aaa"
+  -
+    "roomIndex": 2
+    "robotNumber": 50
+    "minMoney": 1600
+    "storedMoney": 10000
+    "robotName": "qzpn_robot2"
+    "strategy":
+      "betodd": "bbb"
+  -
+    "roomIndex": 3
+    "robotNumber": 50
+    "minMoney": 4000
+    "storedMoney": 50000
+    "robotName": "qzpn_robot3"
+    "strategy":
+      "betodd": "ccc"
+  -
+    "roomIndex": 4
+    "robotNumber": 50
+    "minMoney": 12000
+    "storedMoney": 500000
+    "robotName": "qzpn_robot4"
+    "strategy":
+      "betodd": "ddd"
+  -
+    "roomIndex": 5
+    "robotNumber": 50
+    "minMoney": 40000
+    "storedMoney": 1000000
+    "robotName": "qzpn_robot5"
+    "strategy":
+      "betodd": "eee"
+  -
+    "roomIndex": 6
+    "robotNumber": 50
+    "minMoney": 40000
+    "storedMoney": 1000000
+    "robotName": "qzpn_robot6"
+    "strategy":
+      "betodd": "fff"
+

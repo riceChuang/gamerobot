@@ -3,12 +3,19 @@ package connect
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/websocket"
+	log "github.com/sirupsen/logrus"
 	"github.com/riceChuang/gamerobot/common"
 	"github.com/riceChuang/gamerobot/model"
 	"github.com/riceChuang/gamerobot/util"
 	"github.com/riceChuang/gamerobot/util/logs"
-	log "github.com/sirupsen/logrus"
 	"sync"
+	"time"
+)
+
+const (
+	// Time allowed to read the next pong message from the peer.
+	pingWait = 60 * time.Second
 )
 
 // Client wrapper ws and decoder
@@ -53,9 +60,13 @@ func (hc *HttpConnect) Write(msg *model.Message) {
 
 // Close ...
 func (hc *HttpConnect) Close() error {
+	if hc.conn == nil {
+		return nil
+	}
 	if err := hc.conn.Close(); err != nil {
 		return err
 	}
+	hc.conn = nil
 	return nil
 }
 
@@ -87,6 +98,7 @@ func (nc *HttpConnect) UnRegister(h *model.Handler) {
 }
 
 func (hc *HttpConnect) read() {
+	hc.readDeadLine(pingWait)
 	for {
 		defer hc.conn.Close()
 		//读取ws中的数据
@@ -102,8 +114,11 @@ func (hc *HttpConnect) read() {
 		}
 		msg.Data = []byte{}
 		if string(message) == "ping" {
-			message = []byte("pong")
-			err = hc.conn.Write(message)
+			p :=hc.conn.Conn.PongHandler()
+			err = p("pong")
+			if err != nil {
+				break
+			}
 			continue
 		}
 
@@ -116,4 +131,36 @@ func (hc *HttpConnect) read() {
 		util.GetClientDispatcher().AddMessage(wsMessage)
 	}
 	return
+}
+
+
+func (hc *HttpConnect) readDeadLine(wait time.Duration) {
+	timmer := time.NewTimer(wait)
+	hc.conn.Conn.SetPongHandler(func(string) error {
+		timmer.Reset(wait)
+		if err := hc.conn.Conn.WriteMessage(websocket.PongMessage, nil); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	go func () {
+		for {
+			select{
+			case <-timmer.C :
+
+				wsMessage := &model.WSMessage{
+					From:     common.Client,
+					To:       common.ClientServerTransfer,
+					Msg:      &model.Message{
+						BClassID: common.WSClose,
+						Data: "",
+					},
+				}
+				util.GetClientDispatcher().AddMessage(wsMessage)
+				hc.Close()
+				return
+			}
+		}
+	}()
 }

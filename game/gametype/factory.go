@@ -8,7 +8,7 @@ import (
 	"github.com/riceChuang/gamerobot/util/config"
 )
 
-func GetInstanceByContentType(gType common.GameServerID) (instance GameType) {
+func GetInstanceByContentType(gType common.GameServerID, gIndex ...int32) (instance GameType) {
 
 	var cfg = model.CommonCfg{}
 	gameList := config.GetInstance().GameList
@@ -18,11 +18,17 @@ func GetInstanceByContentType(gType common.GameServerID) (instance GameType) {
 		}
 	}
 
+	var index int32
+	if len(gIndex) > 0 {
+		index = gIndex[0]
+	}
+
+
 	switch gType {
 	case common.GameID_QZPN:
-		return NewFightBase(cfg, qzpn.NewQZPNLogic())
+		return NewFightBase(cfg, qzpn.NewQZPNLogic(index))
 	case common.GameID_BYDH:
-		return NewFightBase(cfg, bydh.NewBYDHLogic())
+		return NewFightBase(cfg, bydh.NewBYDHLogic(index))
 	default:
 		return nil
 	}

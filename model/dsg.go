@@ -1,7 +1,5 @@
 package model
 
-import "github.com/riceChuang/gamerobot/using/netproto"
-
 type DSGLoginReq struct {
 	LoginDomain string
 	AgentID     int
@@ -14,7 +12,6 @@ type DSGLoginResp struct {
 	URL      string
 	UserName string
 	Token    string
-	UserInfo *netproto.UserLoginRet
 }
 
 type DSGStoreMoneyReq struct {

@@ -1,0 +1,17 @@
+FROM golang:1.13.3 AS build-env
+
+ENV GO111MODULE=on
+# All these steps if not change will be cached
+RUN mkdir /game-robot
+WORKDIR /game-robot
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+
+
+RUN apt-get update && apt-get install -y xz-utils && rm -rf /var/lib/apt/lists/*
+ADD https://github.com/upx/upx/releases/download/v3.95/upx-3.95-amd64_linux.tar.xz /usr/local
+RUN xz -d -c /usr/local/upx-3.95-amd64_linux.tar.xz | tar -xOf - upx-3.95-amd64_linux/upx > /bin/upx && chmod a+x /bin/upx
+
+#docker build -f Dockerfile_base.dev -t xxx/game-robot:1.0.1 .
+#docker push xxx/game-robot

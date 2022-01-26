@@ -1,37 +1,53 @@
 package gamehandler
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	"github.com/riceChuang/gamerobot/model"
-	"github.com/riceChuang/gamerobot/util/logs"
 	log "github.com/sirupsen/logrus"
+	"github.com/riceChuang/gamerobot/common"
+	"github.com/riceChuang/gamerobot/model"
+	"github.com/riceChuang/gamerobot/util/config"
+	"github.com/riceChuang/gamerobot/util/logs"
 	"sync"
 )
 
 type GameLogicBase interface {
-	GetMessageBtn() map[string]*model.Message
-	HandleMessage(message *model.WSMessage)
-	UnmarshalMessage(message *model.Message) (proto.Message, error)
+	GetMessageBtn() map[string]*model.Message                       //取得串接按鈕
+	HandleMessage(message *model.WSMessage)                         //處理訊息
+	UnmarshalMessage(message *model.Message) (proto.Message, error) //解析消息
+	GetGameRoomIndex() string                                       //取得遊戲id, e.x. qzpn-1
+	SetUserMoney(money int32)                                       //同步玩家金額
+	SetStrategy(data interface{}) error                             //同步遊戲策略
 }
 
 // Base
 type Base struct {
 	MessageHandler sync.Map
 	Logger         *log.Entry
-	transfer       func(int32) string
+	Transfer       func(int32) string
+	GameID         common.GameServerID
+	RoomIndex      int32
+	GameName       string
+	UserMoney      int32
 }
 
 // NewBase ...
-func NewBase(gameName string, tf func(int32) string) *Base {
-	return &Base{
+func NewBase(gameid common.GameServerID, roomIndex int32) *Base {
+	b := &Base{
 		MessageHandler: sync.Map{},
 		Logger: logs.GetLogger().WithFields(log.Fields{
-			"server": gameName,
+			"server": common.GameServerID_EngName[gameid],
 		}),
-		transfer: tf,
+		GameID:    gameid,
+		RoomIndex: roomIndex,
+		GameName:  common.GameServerID_EngName[gameid],
 	}
+	b.Transfer = func(i int32) string {
+		return ""
+	}
+	return b
 }
 
 func (b *Base) HandleMessage(message *model.WSMessage) {
@@ -64,7 +80,7 @@ func (b *Base) GetMessageBtn() map[string]*model.Message {
 	b.MessageHandler.Range(func(key, value interface{}) bool {
 		handler := value.(*model.GameMessageInfo)
 		if handler.IsButton {
-			Butttons[b.transfer(handler.SClassID)] = &model.Message{
+			Butttons[b.Transfer(handler.SClassID)] = &model.Message{
 				BClassID: handler.BClassID,
 				SClassID: handler.SClassID,
 			}
@@ -72,6 +88,21 @@ func (b *Base) GetMessageBtn() map[string]*model.Message {
 		return true
 	})
 	return Butttons
+}
+
+//get gameindex 30-1
+func (b *Base) GetGameRoomIndex() string {
+	return fmt.Sprintf("%v-%v", b.GameID, b.RoomIndex)
+}
+
+//set empty
+func (b *Base) SetStrategy(data interface{}) error {
+	return nil
+}
+
+//set money
+func (b *Base) SetUserMoney(money int32) {
+	b.UserMoney = money
 }
 
 // Register Handler ...
@@ -86,9 +117,32 @@ func (b *Base) Register(handlers ...*model.GameMessageInfo) error {
 	return nil
 }
 
+//unmarshal room config for game struct
+func (b *Base) UnmarshalRoomConfig(roomID string, v interface{}) error {
+	//id組合方法 GameID-RoomIndex e.x. 30-1
+	roomCfg := config.GetGameInstanceByID(roomID)
+	if roomCfg == nil {
+		return errors.New("cant find roomid")
+	}
+	return nil
+}
+
+func (b *Base) UnmarshalConfig(data interface{}, result interface{}) error {
+	// Convert map to json string
+	jsonStr, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	// Convert json string to struct
+	if err = json.Unmarshal(jsonStr, result); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (b *Base) sendMessage(m *model.WSMessage, h *model.GameMessageInfo) {
 	b.Logger.Println("dispatch message", m.Msg.GetName())
-	if m.Msg.Data == nil && h.OnMessage != nil {
+	if len(m.Msg.Data.([]byte)) == 0 && h.OnMessage != nil {
 		//for button message
 		h.OnMessage(m)
 		return

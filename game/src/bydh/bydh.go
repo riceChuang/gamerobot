@@ -1,6 +1,7 @@
 package bydh
 
 import (
+	"github.com/riceChuang/gamerobot/common"
 	"github.com/riceChuang/gamerobot/framework/gamehandler"
 	"github.com/riceChuang/gamerobot/model"
 	"github.com/riceChuang/gamerobot/using/netproto"
@@ -10,10 +11,11 @@ type BYDHLogic struct {
 	*gamehandler.Base
 }
 
-func NewBYDHLogic() gamehandler.GameLogicBase {
+func NewBYDHLogic(roomIndex int32) gamehandler.GameLogicBase {
 	bydh := &BYDHLogic{
-		Base: gamehandler.NewBase("BYDH", transfer),
+		Base: gamehandler.NewBase(common.GameID_BYDH, roomIndex),
 	}
+	bydh.Transfer = transfer
 	bydh.Init()
 	return bydh
 }

@@ -8,3 +8,10 @@ type UserLogin struct {
 	Env      string `json:"env"`
 }
 
+type StressReq struct {
+	GameID     int32  `json:"gameid"`
+	RoomType   string `json:"roomtype"`
+	Env        string `json:"env"`
+	RobotCount int    `json:"robotcount"`
+	Strategy   string `json:"strategy"`
+}

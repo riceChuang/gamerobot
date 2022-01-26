@@ -1,13 +1,13 @@
 package connecttype
 
 import (
+	log "github.com/sirupsen/logrus"
 	"github.com/riceChuang/gamerobot/common"
 	"github.com/riceChuang/gamerobot/framework/connection/connect"
 	"github.com/riceChuang/gamerobot/model"
 	"github.com/riceChuang/gamerobot/using/netproto"
 	"github.com/riceChuang/gamerobot/util"
 	"github.com/riceChuang/gamerobot/util/logs"
-	log "github.com/sirupsen/logrus"
 	"sync"
 )
 
@@ -20,16 +20,18 @@ type GameConnect struct {
 	GameWS    *connect.ProtoConnect
 	mu        sync.Mutex
 	userInfo  *netproto.UserLoginRet
+	Env       *model.EnvCfg
 	UserMoney int32
 }
 
-func NewGameConnect(gameWS *connect.ProtoConnect, uinfo *netproto.UserLoginRet) *GameConnect {
+func NewGameConnect(env *model.EnvCfg, gameWS *connect.ProtoConnect, uinfo *netproto.UserLoginRet) *GameConnect {
 	gc := &GameConnect{
 		GameWS: gameWS,
 		logger: logs.GetLogger().WithFields(log.Fields{
 			"server": "Game_Type_Connect",
 		}),
 		userInfo: uinfo,
+		Env:      env,
 	}
 	if uinfo != nil {
 		gc.UserMoney = int32(uinfo.GetUserData().GetCashAmount() / int64(100))
@@ -46,11 +48,20 @@ func (gc *GameConnect) ConnectGameWs() {
 		OnMessage: gc.onGameLogin,
 	})
 
+	//處理所有訊息
 	gc.GameWS.Register(&model.Handler{
 		BClassID:  int32(netproto.MessageBClassID_Game),
 		SClassID:  0,
 		OnMessage: gc.onGameMessage,
 	})
+
+	//處理被踢掉訊息
+	gc.GameWS.Register(&model.Handler{
+		BClassID:  int32(netproto.MessageBClassID_Common),
+		SClassID:  int32(netproto.PlatformCommonClassID_TipMessageID),
+		OnMessage: gc.onGameTip,
+	})
+
 
 	gc.GameWS.Connect()
 	gc.requestLoginGame()
@@ -72,7 +83,6 @@ func (gc *GameConnect) CleanGs() {
 	gc.logger.Info("[DEBUG][Manager][CleanGs] ----")
 	if gc.GameWS != nil {
 		gc.GameWS.Clean()
-		gc.GameWS = nil
 	}
 }
 
@@ -122,3 +132,13 @@ func (gc *GameConnect) onGameMessage(msg interface{}) {
 	}
 	util.GetGameDispatcher().AddMessage(wsMessage)
 }
+
+func (gc *GameConnect) onGameTip(msg interface{}) {
+	message, ok := msg.(*netproto.TipMessage)
+	if !ok {
+		gc.logger.Error("Error: data transfer fail")
+	}
+
+	gc.logger.Errorf("[被ＴＴＴＴ了] meg:%v, prarm:%v, msgType:%v",message.GetMessage(), message.GetParam(), message.GetMsgType())
+}
+

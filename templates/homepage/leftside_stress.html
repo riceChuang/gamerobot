@@ -1,7 +1,11 @@
-{{ define "homepage/leftside_game.html"}}
+{{ define "homepage/leftside_stress.html"}}
 <script>
+    var aaaa = {{ .resp }}
+    console.log(aaaa)
     var gameList = {{ .resp.GameList }}
+    console.log(gameList)
     var domain = {{ .resp.Domain }}
+    console.log(domain)
 </script>
 <div class="col-12 col-md-2">
     <form>
@@ -17,7 +21,7 @@
             </div>
             <div class="mb-2">
                 <label for="gameSelect" class="form-label">遊戲選擇</label>
-                <select id="gameSelect" class="form-select" onchange="window.index.clickGame(this)">
+                <select id="gameSelect" class="form-select" onchange="window.stress.clickStressGame(this)">
                     <option selected>Please Select</option>
                     {{ range $key, $value := .resp.GameList }}
                     <option value={{ $value.GameID }} id={{ $value.GameID }}>{{ $value.Name }}</option>
@@ -26,14 +30,25 @@
             </div>
             <div class="mb-2">
                 <label for="roomSelect" class="form-label">遊戲房間</label>
-                <select id="roomSelect" class="form-select">
+                <select id="roomSelect" class="form-select" onchange="window.stress.clickStressRoom(this)">
                     <option selected>Please Select</option>
                 </select>
             </div>
-            <input type="button" class="btn btn-primary" onclick="window.index.loginRequest()" value="登入"/>
+            <div class="mb-2">
+                <p class="form-label">機器人數量</p>
+                <input type="text" class="form-control" id="robotnum">
+            </div>
+            <input type="button" class="btn btn-primary" onclick="window.stress.addSetting()" value="增加"/>
         </fieldset>
     </form>
+    <form>
+        <input type="button" class="btn btn-dark" onclick="window.stress.deleteAllSetting()" value="刪除所有">
+    </form>
 
+    <p>------------</p>
+    <button class="btn btn-success" onclick="window.stress.startStress()">開始</button>
+
+    <button class="btn btn-danger" onclick="window.stress.stopRobot()">停止</button>
 </div>
 
 {{ end }}

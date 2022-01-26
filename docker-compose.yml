@@ -1,0 +1,21 @@
+version: '3'
+services:
+  gamerobot:
+    image: registry-office.zzishare.com/ssp/gamerobot:master
+    container_name: gamerobot
+    build:
+      context: .
+      dockerfile: ./buildtools/Dockerfile
+      args:
+        CI_SERVER_NAME: gamerobot
+    ports:
+      - 8000:8000
+    stdin_open: true
+    tty: true
+    networks:
+      - main-tier
+
+networks:
+  main-tier:
+    driver: bridge
+

@@ -3,12 +3,12 @@ package connect
 import (
 	"context"
 	"github.com/gorilla/websocket"
+	log "github.com/sirupsen/logrus"
 	"github.com/riceChuang/gamerobot/common"
 	"github.com/riceChuang/gamerobot/framework/connection/connect"
 	"github.com/riceChuang/gamerobot/model"
 	"github.com/riceChuang/gamerobot/util"
 	"github.com/riceChuang/gamerobot/util/logs"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"sync"
 )
@@ -69,6 +69,20 @@ func (c2gm *ClientGameCommunicateManager) ClientServerTransferMessage(msg *model
 		2. 工廠若處理完畢會再送往傳送game的通道
 	*/
 	c2gm.logger.Infof("收到訊息 處理func:TransferClientMessage, from:%v, to:%v, 資訊內容:%v", msg.From, msg.To, msg.Msg.String())
+	//特殊 前端client ws斷線時
+	if msg.Msg.BClassID == common.WSClose {
+		c2gm.mu.Lock()
+		for _, c := range c2gm.client {
+			if c.gameConn != nil {
+				err := c.CloseProtoConnect()
+				if err != nil {
+					c2gm.logger.Error(err)
+					return
+				}
+			}
+		}
+	}
+
 	client := c2gm.GetClient(msg.ClientID)
 	if client == nil {
 		return
@@ -95,8 +109,6 @@ func (c2gm *ClientGameCommunicateManager) GameServerTransferMessage(msg *model.W
 	if client == nil {
 		return
 	}
-	//將資料丟給game 工廠處理
-	client.GameType.HandleMessage(msg)
 	//也將資料丟給client顯示
 	msgData := *msg.Msg
 	toClientMsg := &model.WSMessage{
@@ -105,6 +117,10 @@ func (c2gm *ClientGameCommunicateManager) GameServerTransferMessage(msg *model.W
 		ClientID: msg.ClientID,
 		Msg:      &msgData,
 	}
+	//將資料丟給game 工廠處理
+	client.GameType.HandleMessage(msg)
+
+	//轉換資料
 	DetailData, err := client.GameType.UnmarshalMessage(&msgData)
 	if err != nil {
 		c2gm.logger.Error(err)
@@ -117,13 +133,15 @@ func (c2gm *ClientGameCommunicateManager) GameServerTransferMessage(msg *model.W
 
 // GameSender 找到client 的ws 將資料ws寫給他
 func (c2gm *ClientGameCommunicateManager) ClientSender(msg *model.WSMessage) {
-	c2gm.logger.Infof("收到訊息 處理func:SendToClient, from:%v, to:%v, 資訊內容:%v", msg.From, msg.To, msg.Msg.String())
+	c2gm.logger.Infof("收到訊息 處理func:SendToClient, from:%v, to:%v, 資訊內容:%v", msg.From, msg.To, msg.Msg.Data)
 	conn := c2gm.GetClient(msg.ClientID)
 	if conn == nil {
 		c2gm.logger.Error("找不到conn")
 		return
 	}
-	conn.wsConn.Write(msg.Msg)
+	if conn.wsConn != nil {
+		conn.wsConn.Write(msg.Msg)
+	}
 }
 
 // GameSender 找到game 的ws 將資料ws寫給他
@@ -140,7 +158,9 @@ func (c2gm *ClientGameCommunicateManager) GameSender(msg *model.WSMessage) {
 		return
 	}
 
-	client.gameConn.Request(client.gameConn.GameWS, msg.Msg.BClassID, msg.Msg.SClassID, msg.Msg.Data)
+	if client.gameConn != nil {
+		client.gameConn.Request(client.gameConn.GameWS, msg.Msg.BClassID, msg.Msg.SClassID, msg.Msg.Data)
+	}
 }
 
 func (c2gm *ClientGameCommunicateManager) AddClient(conn *ClientConn) {
@@ -162,16 +182,10 @@ func (c2gm *ClientGameCommunicateManager) GetClient(clientID string) *ClientConn
 	return c2gm.client[clientID]
 }
 
-func (c2gm *ClientGameCommunicateManager) CheckTcpAlive() bool {
-	c2gm.mu.Lock()
-	defer c2gm.mu.Unlock()
-
-	//conn, err := net.Dial("tcp", c2gm.tcpServerAddr)
-	//if err != nil {
-	//	c2gm.logger.Error(("httpsrc other tcp[%v] server error", c2gm.tcpServerAddr)
-	//	return false
-	//}
-
-	//conn.Close()
-	return true
+func (c2gm *ClientGameCommunicateManager) GetAllClient() []*ClientConn {
+	var clients = make([]*ClientConn, 0, len(c2gm.client))
+	for _, c := range c2gm.client {
+		clients = append(clients, c)
+	}
+	return clients
 }

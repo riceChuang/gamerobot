@@ -1,0 +1,14 @@
+"name": "config1"
+"rooms":
+    -
+        "roomIndex": 1
+        "robotNumber": 50
+        "minMoney": 100
+        "storedMoney": 1000
+        "robotName": "bydh_robot1"
+    -
+        "roomIndex": 2
+        "robotNumber": 50
+        "minMoney": 100
+        "storedMoney": 1000
+        "robotName": "bydh_robot2"

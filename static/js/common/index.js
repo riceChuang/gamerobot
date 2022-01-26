@@ -1,6 +1,6 @@
 //all internal import here
-import {router} from "./common.js";
+import {router, addFail, addSuccess} from "./common.js";
 
 export  {
-    router
+    router,addFail,addSuccess
 }

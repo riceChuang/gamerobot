@@ -3,12 +3,12 @@ package connecttype
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	log "github.com/sirupsen/logrus"
 	"github.com/riceChuang/gamerobot/common"
 	"github.com/riceChuang/gamerobot/framework/connection/connect"
 	"github.com/riceChuang/gamerobot/model"
 	"github.com/riceChuang/gamerobot/using/netproto"
 	"github.com/riceChuang/gamerobot/util/logs"
-	log "github.com/sirupsen/logrus"
 	"strconv"
 	"sync"
 	"time"
@@ -82,7 +82,6 @@ func (gs *HallConnect) CleanHs() {
 	gs.logger.Infof("[DEBUG][Manager][CleanHs] ----")
 	if gs.hallWS != nil {
 		gs.hallWS.Clean()
-		gs.hallWS = nil
 	}
 }
 

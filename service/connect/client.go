@@ -2,14 +2,14 @@ package connect
 
 import (
 	"context"
+	uuid "github.com/satori/go.uuid"
+	log "github.com/sirupsen/logrus"
 	"github.com/riceChuang/gamerobot/common"
 	"github.com/riceChuang/gamerobot/framework/connection/connect"
 	"github.com/riceChuang/gamerobot/framework/connection/connecttype"
 	"github.com/riceChuang/gamerobot/game/gametype"
 	"github.com/riceChuang/gamerobot/util"
 	"github.com/riceChuang/gamerobot/util/logs"
-	uuid "github.com/satori/go.uuid"
-	log "github.com/sirupsen/logrus"
 	"sync"
 )
 
@@ -64,6 +64,20 @@ func (client *ClientConn) ProtoConnect() error {
 		client.GameType.Initialize(client.gameConn)
 	}
 	client.gameConn.ConnectGameWs()
+	return nil
+}
+
+func (client ClientConn) CloseProtoConnect() error {
+	if client.gameConn != nil {
+		client.gameConn.CleanGs()
+	}
+	return nil
+}
+
+func (client ClientConn) CloseHttpConnect() error {
+	if client.wsConn != nil {
+		return client.wsConn.Close()
+	}
 	return nil
 }
 
