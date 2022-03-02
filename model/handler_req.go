@@ -15,3 +15,8 @@ type StressReq struct {
 	RobotCount int    `json:"robotcount"`
 	Strategy   string `json:"strategy"`
 }
+
+type StrategyItem struct {
+	BetOdd   string `json:"betodd"`
+	Params     string `json:"params"`
+}

@@ -13,6 +13,10 @@ type Dispatcher interface {
 	AddMessage(data *model.WSMessage)
 }
 
+const (
+	defaultQueueSize = 1000
+)
+
 type Dispatch struct {
 	Name         string
 	receiveQueue chan *model.WSMessage
@@ -20,7 +24,6 @@ type Dispatch struct {
 	stopSig      chan bool
 	mu           sync.Mutex
 }
-
 
 var ClientDispatcher Dispatcher
 var clientDispatcherOnce sync.Once
@@ -47,7 +50,7 @@ func GetGameDispatcher() Dispatcher {
 func NewDispatcher(name string) Dispatcher {
 	dp := &Dispatch{
 		Name:         name,
-		receiveQueue: make(chan *model.WSMessage, 1000),
+		receiveQueue: make(chan *model.WSMessage, defaultQueueSize),
 		stopSig:      make(chan bool, 1),
 		passerMap:    make(map[string]func(data *model.WSMessage)),
 	}
@@ -64,7 +67,9 @@ func (dp *Dispatch) AddMsgPasser(name string, passerFunc func(data *model.WSMess
 }
 
 func (dp *Dispatch) AddMessage(data *model.WSMessage) {
-	dp.receiveQueue <- data
+	if !dp.QueueFull(){
+		dp.receiveQueue <- data
+	}
 }
 
 //delete passer
@@ -106,4 +111,8 @@ func (dp *Dispatch) handleReceiveQueue(data *model.WSMessage) {
 	} else {
 		logs.GetLogger().Error("找不到passer %v", data)
 	}
+}
+
+func (dp *Dispatch) QueueFull() bool{
+	return len(dp.receiveQueue) ==defaultQueueSize
 }

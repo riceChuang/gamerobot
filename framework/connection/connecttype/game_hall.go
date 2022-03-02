@@ -56,7 +56,7 @@ func (gs *HallConnect) GetGameWsInfo(hallURL string, gameRoom string, account st
 func (gs *HallConnect) InitHallWs(hallURL string) {
 	gs.CleanHs()
 	//URL := fmt.Sprintf("%s:%d", gs.GameEnvCfg.ServerURL, gs.CommonCfg.HallPort)
-	conn := connect.NewConn(hallURL, nil,common.GameConnect)
+	conn := connect.NewConn(hallURL, nil, common.GameConnect)
 	gs.hallWS = connect.NewProtoConnect(conn)
 
 	gs.hallWS.Register(&model.Handler{
@@ -82,6 +82,7 @@ func (gs *HallConnect) CleanHs() {
 	gs.logger.Infof("[DEBUG][Manager][CleanHs] ----")
 	if gs.hallWS != nil {
 		gs.hallWS.Clean()
+		//gs.hallWS = nil
 	}
 }
 
@@ -100,7 +101,7 @@ func (gs *HallConnect) onServerListRet(msg interface{}) {
 	}
 	go func() {
 		time.Sleep(time.Second * 5)
-		gs.CleanHs()
+		//gs.CleanHs()
 		return
 	}()
 	return
@@ -119,7 +120,7 @@ func (gs *HallConnect) onLoginRet(msg interface{}) {
 	} else {
 		// should kill robot
 		gs.logger.Errorf("未知登入錯誤: %s", data.String())
-		gs.CleanHs()
+		//gs.CleanHs()
 	}
 }
 

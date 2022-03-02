@@ -76,7 +76,7 @@ func (fb *FightBase) onUserStateChange(msg interface{}) {
 				fb.logger.Error(err)
 				return
 			}
-			fb.logger.Infof("沒錢了沒錢了沒錢了 money:%v",dsgStoreResp.Money)
+			fb.logger.Infof("沒錢了沒錢了沒錢了 money:%v", dsgStoreResp.Money)
 			fb.gameConnect.UserMoney = dsgStoreResp.Money
 			nProtoConn := connection.NewProtoConnect(connection.NewConn(fb.gameConnect.GameWS.GetURL(), nil, common.GameConnect))
 			fb.gameConnect.GameWS = nProtoConn
@@ -90,9 +90,6 @@ func (fb *FightBase) onUserStateChange(msg interface{}) {
 		}
 	}
 }
-
-
-
 
 func (fb *FightBase) sendReady() {
 	if fb.gameConnect != nil {

@@ -246,7 +246,7 @@ func (sc *StressController) WebSocketConn(ctx *gin.Context) {
 		return
 	}
 	httpConnect := connection.NewConn("", ws, common.HttpConnect)
-	wsConnection := connection.NewHttpConnect(httpConnect)
+	wsConnection := connection.NewHttpConnect(httpConnect,true)
 
 	for _, conn := range allConns {
 		conn.SetWsConn(wsConnection)

@@ -37,8 +37,8 @@ func NewProtoConnect(conn *Conn) *ProtoConnect {
 	// pc.innerHandler = make(map[string]*msg.Handler)
 	pc.innerHandler = sync.Map{}
 	pc.evtChan = &model.EventChan{
-		ReadSig:       make(chan *model.Message, 2048),
-		WriteSig:      make(chan *model.Message, 2048),
+		ReadSig:       make(chan *model.Message, 4096),
+		WriteSig:      make(chan *model.Message, 4096),
 		ErrSig:        make(chan error),
 		StopHandleSig: make(chan bool, 1),
 		StopWriteSig:  make(chan bool, 1),

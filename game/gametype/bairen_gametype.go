@@ -29,12 +29,13 @@ func (fb *BaiRenBase) Initialize(gameConnect *connecttype.GameConnect) {
 	fb.logger.Info("初始化 fightBase")
 	if gameConnect != nil {
 		fb.gameConnect = gameConnect
-		gameConnect.GameWS.Register(&model.Handler{
-			BClassID:  int32(netproto.MessageBClassID_Game),
-			SClassID:  int32(netproto.GameMessageClassID_UserStateChangeID),
-			MsgType:   &netproto.UserStateChange{},
-			OnMessage: fb.onUserStateChange,
-		})
+		gameConnect.GameWS.Register(
+			&model.Handler{
+				BClassID:  int32(netproto.MessageBClassID_Game),
+				SClassID:  int32(netproto.GameMessageClassID_UserStateChangeID),
+				MsgType:   &netproto.UserStateChange{},
+				OnMessage: fb.onUserStateChange,
+			})
 	}
 }
 
@@ -77,7 +78,7 @@ func (fb *BaiRenBase) onUserStateChange(msg interface{}) {
 				fb.logger.Error(err)
 				return
 			}
-			fb.logger.Infof("沒錢了沒錢了沒錢了 money:%v",dsgStoreResp.Money)
+			fb.logger.Infof("沒錢了沒錢了沒錢了 money:%v", dsgStoreResp.Money)
 			fb.gameConnect.UserMoney = dsgStoreResp.Money
 			nProtoConn := connection.NewProtoConnect(connection.NewConn(fb.gameConnect.GameWS.GetURL(), nil, common.GameConnect))
 			fb.gameConnect.GameWS = nProtoConn

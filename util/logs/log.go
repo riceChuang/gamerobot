@@ -19,7 +19,7 @@ func GetLogger() *logrus.Logger {
 		InitializeLogger(LogConf{
 			ENV:       "production",
 			Path:      defaultLogDirName,
-			LogLevel:  "info",
+			LogLevel:  "error",
 			LogPretty: false,
 		})
 	}
@@ -129,7 +129,6 @@ func (f *myFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	default:
 		levelColor = 36 // blue
 	}
-
 
 	formatMsg := fmt.Sprintf("[%s] - \x1b[%dm%s\x1b[0m - func:%s - file:%s:%d - %s\n",
 		entry.Time.Format(f.TimestampFormat),

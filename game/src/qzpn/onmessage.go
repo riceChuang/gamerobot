@@ -10,12 +10,9 @@ func (qzpn *QZPNLogic) hiOne(data interface{}) {
 	qzpn.Logger.Info("Hi ONE ONE ONE ONE")
 }
 
-
-
 func (qzpn *QZPNLogic) hiTwo(data interface{}) {
 	qzpn.Logger.Info("Hi TWO TWO TWO TWO")
 }
-
 
 func (qzpn *QZPNLogic) hiThree(data interface{}) {
 	msg := data.(*model.WSMessage)

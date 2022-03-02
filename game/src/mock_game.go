@@ -5,8 +5,8 @@
 package src
 
 import (
-	reflect "reflect"
 	gomock "github.com/golang/mock/gomock"
+	reflect "reflect"
 )
 
 // MockGameLogicBase is a mock of GameLogicBase interface.

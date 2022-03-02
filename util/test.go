@@ -18,4 +18,3 @@ func WaitForCtrlC() {
 	}()
 	endWaiter.Wait()
 }
-

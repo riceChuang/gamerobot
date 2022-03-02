@@ -2,8 +2,26 @@ games:
   - name: "BYDH"
     gameid: 38
     hallport: 5012
-    roomtype: ['string1', 'string2', 'string3', 'string4', 'string5', 'string6']
+    roomtype: ['體驗房', '初級房', '中級房', '高級房']
+    gamesids: []
+    clientsids: []
   - name: "QZPN"
     gameid: 30
     hallport: 5014
-    roomtype: ['string1', 'string2', 'string3', 'string4', 'string5', 'string6']
+    roomtype: ['體驗房', '初級房', '中級房', '高級房', '至尊房', 'string6']
+    gamesids: []
+    clientsids: []
+
+  - name: "BRSB"
+    gameid: 40
+    hallport: 5028
+    roomtype: ['string1', 'string2', 'string3', 'string4']
+    gamesids: []
+    clientsids: []
+
+  - name: "WRTTZ"
+    gameid: 41
+    hallport: 5029
+    roomtype: [ 'string1', 'string2', 'string3', 'string4']
+    gamesids: [10002,10005,10016]
+    clientsids: [10020,10002,10009]

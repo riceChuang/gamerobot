@@ -23,6 +23,8 @@ const (
 	GameID_FQZS   GameServerID = 35 //飞禽走兽
 	GameID_FP     GameServerID = 36 //森林舞會
 	GameID_BYDH   GameServerID = 38 //捕魚大亨
+	GameID_BRSB   GameServerID = 40 //百人骰宝
+	GameID_WRTTZ  GameServerID = 41 //万人推筒子
 )
 
 var (
@@ -47,6 +49,8 @@ var (
 		GameID_FQZS:   "FQZS",
 		GameID_FP:     "FP",
 		GameID_BYDH:   "BYDH",
+		GameID_BRSB:    "BRSB",
+		GameID_WRTTZ:  "WRTTZ",
 	}
 
 	// GameIDtoName ...
@@ -71,6 +75,8 @@ var (
 		GameID_FQZS:   "飞禽走兽",
 		GameID_FP:     "森林舞會",
 		GameID_BYDH:   "捕魚大亨",
+		GameID_BRSB:    "百人骰宝",
+		GameID_WRTTZ:  "万人推筒子",
 	}
 	// GameNameToID ...
 	GameNameToID = map[string]int{
@@ -93,8 +99,33 @@ var (
 		"RU":      37,
 		"BYDH":    38,
 		"DTNN":    39,
+		"BRSB":    40,
+		"WRTTZ":   41,
 	}
-
+	GameIdToInt32 = map[GameServerID]int32{
+		GameID_QZNN:   2,  //搶莊牛牛
+		GameID_ZJH:    3,  //喜錢炸金花
+		GameID_TBNN:   7,  //通比牛牛
+		GameID_SG:     8,  //三公
+		GameID_SSS:    10, //十三水
+		GameID_LHD:    11, //龍虎鬥
+		GameID_BJL:    13, //百家樂
+		GameID_BRNN:   19, //百人牛牛
+		GameID_HHDZ:   20, //红黑大战
+		GameID_CD21:   22, //21點
+		GameID_WRJH:   28, //萬人炸金花
+		GameID_BAR28:  29, //28槓
+		GameID_QZPN:   30, //搶莊牌九
+		GameID_CPQN:   31, //看三搶裝牛牛
+		GameID_CPQN4:  32, //看四搶莊牛牛
+		GameID_IDAZJH: 33, //印度炸金花
+		GameID_BCBM:   34, //奔馳寶馬
+		GameID_FQZS:   35, //飞禽走兽
+		GameID_FP:     36, //森林舞會
+		GameID_BYDH:   38, //捕魚大亨
+		GameID_BRSB:   40, //捕魚大亨
+		GameID_WRTTZ:  41, //万人推筒子
+	}
 )
 
 func GameServerIDToString(id GameServerID) string {

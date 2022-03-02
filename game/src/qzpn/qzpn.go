@@ -19,7 +19,7 @@ type QZPNLogic struct {
 
 func NewQZPNLogic(roomIndex int32) gamehandler.GameLogicBase {
 	qzpn := &QZPNLogic{
-		Base: gamehandler.NewBase(common.GameID_QZPN, roomIndex),
+		Base:     gamehandler.NewBase(common.GameID_QZPN, roomIndex),
 		Strategy: &strategy{},
 	}
 	qzpn.Transfer = transfer
@@ -47,7 +47,7 @@ func (qzpn *QZPNLogic) Init() {
 
 	err := qzpn.SetStrategy(nil)
 	if err != nil {
-		qzpn.Logger.Errorf("can't set Strategy game:%v",qzpn.GameID)
+		qzpn.Logger.Errorf("can't set Strategy game:%v", qzpn.GameID)
 	}
 
 	qzpn.Register(

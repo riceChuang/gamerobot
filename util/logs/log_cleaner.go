@@ -18,7 +18,7 @@ var (
 )
 
 const (
-	defaultLogDirName = "logs"   //日志目录
+	defaultLogDirName = "log"   //日志目录
 	maxLogFileSize    = 10 << 20 //最大日志文件大小10MB
 	maxLogDirSize     = 1 << 30  //最大日志文件目录大小1GB
 )

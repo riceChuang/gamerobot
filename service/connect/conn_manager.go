@@ -35,9 +35,13 @@ type ClientGameCommunicateManager struct {
 	parser       util.Parser
 	gameWSUrlMap map[string]string
 	hallWS       *connect.ProtoConnect
+	sendInfo     *util.SendInfo
 }
 
-func NewClientWsToGameServer(wsAddr string) *ClientGameCommunicateManager {
+func NewClientWsToGameServer(wsAddr string, cfg []model.CommonCfg) *ClientGameCommunicateManager {
+
+	sendMap := util.NewSendFilter(cfg)
+
 	clientGameCommunicateOnce.Do(func() {
 		clientGameCommunicateManager = &ClientGameCommunicateManager{
 			mu:          &sync.Mutex{},
@@ -46,13 +50,15 @@ func NewClientWsToGameServer(wsAddr string) *ClientGameCommunicateManager {
 			logger: logs.GetLogger().WithFields(log.Fields{
 				"server": "connection_manager",
 			}),
-			parser: &util.ByteParser{},
+			parser:   &util.ByteParser{},
+			sendInfo: sendMap,
 		}
 
 		util.GetClientDispatcher().AddMsgPasser(string(common.ClientServerTransfer), clientGameCommunicateManager.ClientServerTransferMessage)
 		util.GetClientDispatcher().AddMsgPasser(string(common.ClientSender), clientGameCommunicateManager.ClientSender)
 		util.GetGameDispatcher().AddMsgPasser(string(common.GameServerTransfer), clientGameCommunicateManager.GameServerTransferMessage)
 		util.GetGameDispatcher().AddMsgPasser(string(common.GameSender), clientGameCommunicateManager.GameSender)
+
 	})
 	return clientGameCommunicateManager
 }
@@ -109,6 +115,8 @@ func (c2gm *ClientGameCommunicateManager) GameServerTransferMessage(msg *model.W
 	if client == nil {
 		return
 	}
+	sendFilter, _ := c2gm.sendInfo.GameSendMap[int32(client.GameID)]
+
 	//也將資料丟給client顯示
 	msgData := *msg.Msg
 	toClientMsg := &model.WSMessage{
@@ -117,8 +125,6 @@ func (c2gm *ClientGameCommunicateManager) GameServerTransferMessage(msg *model.W
 		ClientID: msg.ClientID,
 		Msg:      &msgData,
 	}
-	//將資料丟給game 工廠處理
-	client.GameType.HandleMessage(msg)
 
 	//轉換資料
 	DetailData, err := client.GameType.UnmarshalMessage(&msgData)
@@ -127,8 +133,18 @@ func (c2gm *ClientGameCommunicateManager) GameServerTransferMessage(msg *model.W
 		return
 	}
 	toClientMsg.Msg.Data = DetailData
+
+	sendGame := sendFilter.FilterGameMsg(msg)
+	if sendGame {
+		client.GameType.HandleMessage(msg)
+	}
+
+	//如果client掛掉 會queue注
+	sendClient := sendFilter.FilterClientMsg(msg)
+	if sendClient {
+		util.GetClientDispatcher().AddMessage(toClientMsg)
+	}
 	c2gm.logger.Infof("[送送送送送], from:%v, to:%v, 資訊內容:%v", msg.From, msg.To, msg.Msg.String())
-	util.GetClientDispatcher().AddMessage(toClientMsg)
 }
 
 // GameSender 找到client 的ws 將資料ws寫給他
@@ -189,3 +205,27 @@ func (c2gm *ClientGameCommunicateManager) GetAllClient() []*ClientConn {
 	}
 	return clients
 }
+
+//func (c2gm *ClientGameCommunicateManager) ClientFileWriter(msg *model.WSMessage) {
+//	//轉換或處理資料
+//	/*
+//		1. 需要把拿game的資訊丟一份往client顯示
+//	*/
+//	client := c2gm.GetClient(msg.ClientID)
+//	if client == nil {
+//		return
+//	}
+//	msgData := *msg.Msg
+//	DetailData, err := client.GameType.UnmarshalMessage(&msgData)
+//	if err != nil {
+//		c2gm.logger.Error(err)
+//		return
+//	}
+//	fileCfg := io.FileConf{
+//		FolderName: "wrttz",
+//		FileHeader: "wrttz",
+//	}
+//	fw, _ := io.NewFileWriter(&fileCfg)
+//
+//	fw.Write(DetailData.String())
+//}

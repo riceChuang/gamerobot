@@ -1,7 +1,7 @@
 bindport: ":8888"
-loglevel: "debug"
-account: test_gamerobot_0001
-password: test_gamerobot_0001
+loglevel: "error"
+account: test_gamerobot_ben
+password: test_gamerobot_ben
 domain: "ws://127.0.0.1:8888"
 environment:
   - env: "DEV"
@@ -13,6 +13,10 @@ environment:
     loginDomain: "10.1.7.36"
     agentID: 1
   - env: "FEATURE"
-    serverUrl: "ws://10.1.7.21"
-    loginDomain: "10.1.7.21"
+    serverUrl: "ws://103.103.81.2"
+    loginDomain: "103.103.81.2"
     agentID: 3
+#  - env: "LOCAL"
+#    serverUrl: "ws://127.0.0.1"
+#    loginDomain: "127.0.0.1"
+#    agentID: 3

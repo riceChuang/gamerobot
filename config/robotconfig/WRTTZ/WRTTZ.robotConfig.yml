@@ -1,0 +1,36 @@
+"name": "config1"
+"rooms":
+  - "roomIndex": 1
+    "robotNumber": 1000
+    "minMoney": 50
+    "storedMoney": 100000000
+    "robotName": "wrttz_robot1"
+    "strategy":
+      - "betodd": "1"
+      - "params": "2"
+  - "roomIndex": 2
+    "robotNumber": 50
+    "minMoney": 10000
+    "storedMoney": 100000000
+    "robotName": "wrttz_robot2"
+    "strategy":
+      - "betodd": "4"
+      - "params": "100000"
+  - "roomIndex": 3
+    "robotNumber": 50
+    "minMoney": 100000
+    "storedMoney": 10000000000
+    "robotName": "wrttz_robot3"
+    "strategy":
+      - "betodd": "1"
+      - "params": "1,1000|2,2000|3,5000|4,6000|5,1000|6,2000"
+  - "roomIndex": 4
+    "robotNumber": 50
+    "minMoney": 1000000
+    "storedMoney": 10000000000
+    "robotName": "wrttz_robot4"
+    "strategy":
+      - "betodd": "1"
+      - "params": "1,1000|2,2000|3,5000|4,6000|5,1000|6,2000"
+
+

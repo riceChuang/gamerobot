@@ -24,3 +24,6 @@
 
 "robotName": "bydh_robot1"  // 機器人的名字前面的index
 e.x. bydh_robot1_0000 ~ bydh_robot1_0050
+
+gamesids: `[10002,10005,10016]` //哪些id要送到game裡面 ex state P.S 留空＝全送
+clientsids: `[10002,10005,10016]` ////哪些id要送到client 在前端顯示 P.S 留空＝全送

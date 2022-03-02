@@ -25,14 +25,17 @@ type HttpConnect struct {
 	lock         sync.Mutex // readwrite lock
 	logger       *log.Entry // inner Logger
 	ClientID     string
+	isStress     bool
+	isDead       bool
 }
 
-func NewHttpConnect(conn *Conn) *HttpConnect {
+func NewHttpConnect(conn *Conn, isStress bool) *HttpConnect {
 	hc := &HttpConnect{
 		conn: conn,
 		logger: logs.GetLogger().WithFields(log.Fields{
 			"server": "http_connect",
 		}),
+		isStress: isStress,
 	}
 	// nc.innerHandler = make(map[string]*msg.Handler)
 	hc.innerHandler = sync.Map{}
@@ -98,7 +101,11 @@ func (nc *HttpConnect) UnRegister(h *model.Handler) {
 }
 
 func (hc *HttpConnect) read() {
-	hc.readDeadLine(pingWait)
+	if !hc.isStress {
+		//不是壓測才需要監控ws client 不然壓測時斷掉沒差
+		hc.readDeadLine(pingWait)
+	}
+
 	for {
 		defer hc.conn.Close()
 		//读取ws中的数据
@@ -114,7 +121,7 @@ func (hc *HttpConnect) read() {
 		}
 		msg.Data = []byte{}
 		if string(message) == "ping" {
-			p :=hc.conn.Conn.PongHandler()
+			p := hc.conn.Conn.PongHandler()
 			err = p("pong")
 			if err != nil {
 				break
@@ -133,7 +140,6 @@ func (hc *HttpConnect) read() {
 	return
 }
 
-
 func (hc *HttpConnect) readDeadLine(wait time.Duration) {
 	timmer := time.NewTimer(wait)
 	hc.conn.Conn.SetPongHandler(func(string) error {
@@ -144,17 +150,17 @@ func (hc *HttpConnect) readDeadLine(wait time.Duration) {
 		return nil
 	})
 
-	go func () {
+	go func() {
 		for {
-			select{
-			case <-timmer.C :
+			select {
+			case <-timmer.C:
 
 				wsMessage := &model.WSMessage{
-					From:     common.Client,
-					To:       common.ClientServerTransfer,
-					Msg:      &model.Message{
+					From: common.Client,
+					To:   common.ClientServerTransfer,
+					Msg: &model.Message{
 						BClassID: common.WSClose,
-						Data: "",
+						Data:     "",
 					},
 				}
 				util.GetClientDispatcher().AddMessage(wsMessage)

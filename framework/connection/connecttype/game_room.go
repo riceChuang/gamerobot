@@ -62,7 +62,6 @@ func (gc *GameConnect) ConnectGameWs() {
 		OnMessage: gc.onGameTip,
 	})
 
-
 	gc.GameWS.Connect()
 	gc.requestLoginGame()
 }
@@ -83,6 +82,7 @@ func (gc *GameConnect) CleanGs() {
 	gc.logger.Info("[DEBUG][Manager][CleanGs] ----")
 	if gc.GameWS != nil {
 		gc.GameWS.Clean()
+		//gc.GameWS = nil
 	}
 }
 
@@ -139,6 +139,5 @@ func (gc *GameConnect) onGameTip(msg interface{}) {
 		gc.logger.Error("Error: data transfer fail")
 	}
 
-	gc.logger.Errorf("[被ＴＴＴＴ了] meg:%v, prarm:%v, msgType:%v",message.GetMessage(), message.GetParam(), message.GetMsgType())
+	gc.logger.Errorf("[被ＴＴＴＴ了] meg:%v, prarm:%v, msgType:%v", message.GetMessage(), message.GetParam(), message.GetMsgType())
 }
-

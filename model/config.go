@@ -20,10 +20,12 @@ type EnvCfg struct {
 
 // CommonCfg ...
 type CommonCfg struct {
-	RoomType []string `mapstructure:"roomtype"`
-	GameID   int32    `mapstructure:"gameid"`
-	HallPort int32    `mapstructure:"hallport"`
-	GameName string   `mapstructure:"name"`
+	RoomType       []string `mapstructure:"roomtype"`
+	GameID         int32    `mapstructure:"gameid"`
+	HallPort       int32    `mapstructure:"hallport"`
+	GameName       string   `mapstructure:"name"`
+	GameSIds       []int32  `mapstructure:"gamesids"`
+	ClientSIds     []int32  `mapstructure:"clientsids"`
 }
 
 // RoomCfgBase ...

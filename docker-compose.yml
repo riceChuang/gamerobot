@@ -10,11 +10,13 @@ services:
         CI_SERVER_NAME: gamerobot
     ports:
       - 8000:8000
+    volumes:
+      - ./outputs:/outputs
+      - ./log:/log
     stdin_open: true
     tty: true
     networks:
       - main-tier
-
 networks:
   main-tier:
     driver: bridge

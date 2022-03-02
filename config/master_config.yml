@@ -1,5 +1,5 @@
 bindport: ":8888"
-loglevel: "info"
+loglevel: "error"
 account: test_gamerobot_0001
 password: test_gamerobot_0001
 domain: "ssp-bot.zzishare.com"

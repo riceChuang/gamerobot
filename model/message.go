@@ -49,7 +49,6 @@ func (msg *Message) ToStringMessage() []byte {
 	return []byte(sMsg)
 }
 
-
 // Equals 消息ID是否一致
 func (msg *Message) Equals(othermsg *Message) bool {
 	return msg.BClassID == othermsg.BClassID && msg.SClassID == othermsg.SClassID

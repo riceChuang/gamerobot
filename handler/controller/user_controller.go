@@ -123,19 +123,19 @@ func (h *UserController) UserLogin(ctx *gin.Context) {
 
 	if request.GameID == 0 {
 		h.logger.Info("沒有設定遊戲Id")
-		ctx.AbortWithStatusJSON(http.StatusBadRequest,model.ErrInvalidRequest)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, model.ErrInvalidRequest)
 		return
 	}
 
 	if request.Env == "" {
 		h.logger.Info("沒有設定環境Id")
-		ctx.AbortWithStatusJSON(http.StatusBadRequest,model.ErrInvalidRequest)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, model.ErrInvalidRequest)
 		return
 	}
 
 	if request.RoomType == "" {
 		h.logger.Info("沒有設定房間index")
-		ctx.AbortWithStatusJSON(http.StatusBadRequest,model.ErrInvalidRequest)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, model.ErrInvalidRequest)
 		return
 	}
 
@@ -158,7 +158,7 @@ func (h *UserController) UserLogin(ctx *gin.Context) {
 	roomCfg := config.GetGameInstanceByID(gameInstance.GetGameHandler().GetGameRoomIndex())
 	if roomCfg == nil {
 		h.logger.Info("找不到cofig")
-		ctx.AbortWithStatusJSON(http.StatusBadRequest,model.APIException{Code: http.StatusBadRequest, Message: "bad_request", Data: "config not found"})
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, model.APIException{Code: http.StatusBadRequest, Message: "bad_request", Data: "config not found"})
 		return
 	}
 
@@ -171,7 +171,7 @@ func (h *UserController) UserLogin(ctx *gin.Context) {
 	}
 	if envInfo == nil {
 		h.logger.Error("找不到環境")
-		ctx.AbortWithStatusJSON(http.StatusBadRequest,model.ErrInternalServerError)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, model.ErrInternalServerError)
 		return
 	}
 
@@ -187,7 +187,7 @@ func (h *UserController) UserLogin(ctx *gin.Context) {
 	dsgLoginResp, err = h.useCase.DsgAPIBase.Login(dsgLoginReq)
 	if err != nil {
 		h.logger.Error(err)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest,model.ErrInternalServerError)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, model.ErrInternalServerError)
 		return
 	}
 	h.logger.Info(dsgLoginResp.URL)
@@ -203,7 +203,7 @@ func (h *UserController) UserLogin(ctx *gin.Context) {
 	dsgStoreResp, err = h.useCase.DsgAPIBase.StoreMoney(dsgStoreReq)
 	if err != nil {
 		h.logger.Error(err)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest,model.ErrInternalServerError)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, model.ErrInternalServerError)
 		return
 	}
 	h.logger.Info(dsgStoreResp.Money)
@@ -261,7 +261,7 @@ func (h *UserController) WebSocketConn(ctx *gin.Context) {
 	conn := connManager.GetClient(connID)
 	if conn == nil {
 		h.logger.Errorf("找不到connID:%v", connID)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest,model.ErrNotFound)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, model.ErrNotFound)
 		return
 	}
 
@@ -272,7 +272,7 @@ func (h *UserController) WebSocketConn(ctx *gin.Context) {
 		return
 	}
 	httpConnect := connection.NewConn("", ws, common.HttpConnect)
-	wsConnection := connection.NewHttpConnect(httpConnect)
+	wsConnection := connection.NewHttpConnect(httpConnect, false)
 	conn.SetWsConn(wsConnection)
 
 	err = wsConnection.Connect()

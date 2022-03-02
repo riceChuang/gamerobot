@@ -107,6 +107,8 @@ func (ws *Conn) Close() error {
 			return fmt.Errorf("socket Close Error: %s", err.Error())
 		}
 		ws.IsConnect = false
+		ws.Conn.Close()
+		//ws.Conn = nil
 	} else {
 		return errors.New("socket already closed")
 	}
